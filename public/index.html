@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proof — LP Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #0d1117;
+  --bg2:      #161b22;
+  --bg3:      #1e242c;
+  --bg4:      #262e38;
+  --green:    #10b981;
+  --green-d:  #065f46;
+  --white:    #e6edf3;
+  --slate:    #484f58;
+  --slate-l:  #6e7681;
+  --slate-ll: #8b949e;
+  --blue:     #58a6ff;
+  --amber:    #f0a500;
+  --red:      #f85149;
+  --border:   rgba(255,255,255,0.07);
+  --border-g: rgba(16,185,129,0.25);
+}
+html, body { min-height: 100%; background: var(--bg); color: var(--white); font-family: 'Syne', sans-serif; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const LOADING_STEPS = [
+  'Searching for institution overview...',
+  'Researching private markets allocations...',
+  'Identifying fund manager relationships...',
+  'Checking regulatory filings...',
+  'Reviewing recent fund activity...',
+  'Analysing risk profile...',
+  'Identifying key contacts...',
+  'Searching for warm entry points...',
+  'Calculating Proof fit score...',
+  'Preparing briefing document...',
+];
+
+const FIT_COLORS = {
+  'Strong Fit':   '#10b981',
+  'Good Fit':     '#58a6ff',
+  'Moderate Fit': '#f0a500',
+  'Weak Fit':     '#f85149',
+};
+
+const SEVERITY_COLORS = {
+  high:   '#f85149',
+  medium: '#f0a500',
+  low:    '#58a6ff',
+};
+
+// ── Shared styles ──────────────────────────────────────────────────────────
+
+const S = {
+  topbar: {
+    height: 60, background: '#161b22',
+    borderBottom: '1px solid rgba(255,255,255,0.07)',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '0 28px', position: 'sticky', top: 0, zIndex: 100,
+  },
+  logo: { display: 'flex', alignItems: 'center', gap: 12 },
+  logoMark: {
+    width: 32, height: 32, background: '#10b981', borderRadius: 8,
+    display: 'grid', placeItems: 'center', flexShrink: 0,
+  },
+  logoName: { fontSize: 15, fontWeight: 800, letterSpacing: -0.4, color: '#fff' },
+  logoSub: { fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681', marginLeft: 4 },
+  pill: {
+    fontFamily: "'DM Mono', monospace", fontSize: 10, padding: '4px 13px',
+    borderRadius: 100, border: '1px solid rgba(16,185,129,0.3)', color: '#10b981', letterSpacing: 0.5,
+  },
+  card: {
+    background: '#161b22', border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: 12, padding: '18px 20px',
+  },
+  sectionLabel: {
+    fontFamily: "'DM Mono', monospace", fontSize: 9, fontWeight: 500,
+    letterSpacing: 1.6, textTransform: 'uppercase', color: '#6e7681',
+    marginBottom: 12,
+  },
+};
+
+// ── TopBar ─────────────────────────────────────────────────────────────────
+
+function TopBar({ onNew, showNew }) {
+  return (
+    <div style={S.topbar}>
+      <div style={S.logo}>
+        <div style={S.logoMark}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6.5" stroke="#000" strokeWidth="1.5"/>
+            <path d="M8 4.5v4M8 10v1.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <span style={S.logoName}>Proof</span>
+        <span style={S.logoSub}>/ lp intelligence</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {showNew && (
+          <button onClick={onNew} style={{
+            padding: '7px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 8, color: '#8b949e', fontFamily: "'Syne', sans-serif", fontSize: 12,
+            fontWeight: 600, cursor: 'pointer',
+          }}>
+            ← New Research
+          </button>
+        )}
+        <span style={S.pill}>PROOF PRIVATE MARKETS</span>
+      </div>
+    </div>
+  );
+}
+
+// ── SearchView ─────────────────────────────────────────────────────────────
+
+function SearchView({ onSearch }) {
+  const [q, setQ] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const submit = () => { if (q.trim()) onSearch(q.trim()); };
+
+  const examples = [
+    'Teacher Retirement System of Texas',
+    'Oxford University Endowment',
+    'APG Asset Management',
+    'Hamilton Lane',
+    'Future Fund Australia',
+  ];
+
+  return (
+    <div style={{
+      minHeight: 'calc(100vh - 60px)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: '40px 24px',
+    }}>
+      <div style={{ maxWidth: 620, width: '100%' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: '#10b981', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>LP Intelligence</div>
+          <h1 style={{ fontSize: 34, fontWeight: 800, letterSpacing: -0.8, color: '#fff', lineHeight: 1.2, marginBottom: 12 }}>
+            Research any LP<br/>before you reach out
+          </h1>
+          <p style={{ fontSize: 14, color: '#6e7681', lineHeight: 1.7 }}>
+            Enter an institution name or website. Proof researches their portfolio,<br/>
+            risk profile, key contacts, and fit for Proof's platform.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+          <input
+            ref={inputRef}
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && submit()}
+            placeholder="e.g. Teacher Retirement System of Texas"
+            style={{
+              flex: 1, background: '#1e242c', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 10, color: '#e6edf3', fontFamily: "'Syne', sans-serif",
+              fontSize: 14, padding: '14px 18px', outline: 'none',
+              transition: 'border-color 0.15s',
+            }}
+            onFocus={e => e.target.style.borderColor = 'rgba(16,185,129,0.4)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+          />
+          <button
+            onClick={submit}
+            disabled={!q.trim()}
+            style={{
+              padding: '14px 24px', background: q.trim() ? '#10b981' : '#1e242c',
+              color: q.trim() ? '#000' : '#484f58',
+              border: '1px solid ' + (q.trim() ? '#10b981' : 'rgba(255,255,255,0.07)'),
+              borderRadius: 10, fontFamily: "'Syne', sans-serif", fontSize: 13,
+              fontWeight: 800, cursor: q.trim() ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s', whiteSpace: 'nowrap',
+            }}
+          >
+            Research →
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', letterSpacing: 0.5 }}>TRY:</span>
+          {examples.map(ex => (
+            <button key={ex} onClick={() => onSearch(ex)} style={{
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 100, color: '#6e7681', fontFamily: "'Syne', sans-serif",
+              fontSize: 11, padding: '4px 12px', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.target.style.borderColor = 'rgba(16,185,129,0.3)'; e.target.style.color = '#10b981'; }}
+            onMouseLeave={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.color = '#6e7681'; }}
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── LoadingView ────────────────────────────────────────────────────────────
+
+function LoadingView({ query }) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setStep(s => (s + 1) % LOADING_STEPS.length), 2800);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: 'calc(100vh - 60px)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', gap: 28,
+    }}>
+      <div style={{ position: 'relative', width: 56, height: 56 }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%',
+          border: '2px solid #1e242c', borderTopColor: '#10b981',
+          animation: 'spin 0.75s linear infinite',
+        }}/>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
+          Researching {query}
+        </div>
+        <div style={{
+          fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#6e7681',
+          minHeight: 18, transition: 'opacity 0.3s',
+        }}>
+          {LOADING_STEPS[step]}
+        </div>
+      </div>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58' }}>
+        This typically takes 30–60 seconds
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+// ── BriefingView ───────────────────────────────────────────────────────────
+
+const ESG_COLORS = {
+  'ESG Leader':    '#10b981',
+  'ESG Active':    '#58a6ff',
+  'ESG Developing':'#f0a500',
+  'ESG Minimal':   '#6e7681',
+};
+
+function ScoreBadge({ label, score, rating, color }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      background: '#1e242c', border: `1px solid ${color}33`,
+      borderRadius: 12, padding: '14px 20px', minWidth: 110,
+    }}>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: '#6e7681', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 36, fontWeight: 800, color, lineHeight: 1, marginBottom: 4 }}>{score}</div>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color, textAlign: 'center' }}>{rating}</div>
+    </div>
+  );
+}
+
+function FitBadge({ score, rating }) {
+  const color = FIT_COLORS[rating] || '#10b981';
+  return <ScoreBadge label="Proof Fit" score={score} rating={rating} color={color} />;
+}
+
+function Tag({ children, color }) {
+  return (
+    <span style={{
+      fontFamily: "'DM Mono', monospace", fontSize: 10, padding: '3px 10px',
+      borderRadius: 100, border: `1px solid ${color || 'rgba(255,255,255,0.1)'}`,
+      color: color || '#8b949e', background: color ? color + '14' : 'transparent',
+      whiteSpace: 'nowrap',
+    }}>{children}</span>
+  );
+}
+
+function SectionCard({ label, children, style }) {
+  return (
+    <div style={{ ...S.card, ...style }}>
+      <div style={S.sectionLabel}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function InstitutionHeader({ institution, fit, esg }) {
+  return (
+    <div style={{ ...S.card, marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase', color: '#10b981', marginBottom: 8 }}>LP Briefing</div>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 12 }}>{institution.name}</h2>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+            <Tag color="#10b981">{institution.type}</Tag>
+            <Tag>{institution.aum} AUM</Tag>
+            <Tag>{institution.hq}</Tag>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681' }}>Private Markets:</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#e6edf3', fontWeight: 500 }}>{institution.private_markets_allocation}</span>
+          </div>
+          {institution.investment_focus && (
+            <div style={{ marginTop: 10, fontSize: 12, color: '#8b949e', lineHeight: 1.65 }}>
+              {institution.investment_focus}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          {esg && <ScoreBadge label="ESG Score" score={esg.score} rating={esg.rating} color={ESG_COLORS[esg.rating] || '#58a6ff'} />}
+          <FitBadge score={fit.score} rating={fit.rating} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FundExposures({ items }) {
+  if (!items?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No fund exposures identified</div>;
+  const byStrategy = items.reduce((acc, f) => {
+    if (!acc[f.strategy]) acc[f.strategy] = [];
+    acc[f.strategy].push(f);
+    return acc;
+  }, {});
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {Object.entries(byStrategy).map(([strategy, funds]) => (
+        <div key={strategy}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#10b981', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 7 }}>{strategy}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {funds.map((f, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ color: '#10b981', fontSize: 12, flexShrink: 0, lineHeight: '18px' }}>›</span>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#e6edf3' }}>{f.manager}</span>
+                  {f.notes && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681', marginLeft: 8 }}>{f.notes}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RegulatorySection({ regulatory }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', marginBottom: 4 }}>JURISDICTION</div>
+        <Tag color="#58a6ff">{regulatory.jurisdiction}</Tag>
+      </div>
+      {regulatory.registration && (
+        <div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', marginBottom: 4 }}>REGISTRATION</div>
+          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{regulatory.registration}</div>
+        </div>
+      )}
+      {regulatory.compliance_notes && (
+        <div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', marginBottom: 4 }}>CONTEXT</div>
+          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{regulatory.compliance_notes}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecentActivity({ items }) {
+  if (!items?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No recent activity identified</div>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {items.map((item, i) => (
+        <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#10b981', flexShrink: 0, paddingTop: 1, minWidth: 72 }}>{item.date}</div>
+          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{item.event}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RiskFlags({ flags }) {
+  if (!flags?.length) return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10b981' }}>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#10b981" strokeWidth="1.2"/><path d="M4.5 7l2 2 3-3" stroke="#10b981" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>No flags identified</span>
+    </div>
+  );
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {flags.map((f, i) => {
+        const color = SEVERITY_COLORS[f.severity] || '#6e7681';
+        return (
+          <div key={i} style={{ background: '#0d1117', borderRadius: 8, padding: '10px 12px', border: `1px solid ${color}22` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: f.source ? 4 : 0 }}>
+              <div style={{ fontSize: 12, color: '#e6edf3', lineHeight: 1.55 }}>{f.flag}</div>
+              <span style={{
+                fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 8px', borderRadius: 100,
+                background: color + '18', color, border: `1px solid ${color}33`,
+                textTransform: 'uppercase', flexShrink: 0,
+              }}>{f.severity}</span>
+            </div>
+            {f.source && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58' }}>{f.source}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function KeyContacts({ contacts }) {
+  if (!contacts?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No contacts identified</div>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {contacts.map((c, i) => (
+        <div key={i} style={{ background: '#0d1117', borderRadius: 8, padding: '10px 12px' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#e6edf3', marginBottom: 2 }}>
+            {c.name}
+            {c.linkedin && (
+              <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 8, fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#58a6ff', verticalAlign: 'middle' }}>LinkedIn ↗</a>
+            )}
+          </div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#10b981' }}>{c.title}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WarmEntryPoints({ points }) {
+  if (!points?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No entry points identified</div>;
+  const typeColors = {
+    interview: '#10b981', conference: '#58a6ff', article: '#f0a500',
+    report: '#8b949e', 'linkedin post': '#0a66c2',
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {points.map((p, i) => {
+        const color = typeColors[p.type?.toLowerCase()] || '#6e7681';
+        return (
+          <div key={i} style={{ background: '#0d1117', borderRadius: 8, padding: '10px 12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{
+                fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 8px',
+                borderRadius: 100, background: color + '18', color, border: `1px solid ${color}33`,
+                textTransform: 'uppercase',
+              }}>{p.type}</span>
+              {p.url && (
+                <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#58a6ff' }}>↗</a>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{p.description}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EsgSection({ esg }) {
+  const color = ESG_COLORS[esg.rating] || '#58a6ff';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ fontSize: 32, fontWeight: 800, color, lineHeight: 1 }}>{esg.score}<span style={{ fontSize: 16, color: '#484f58' }}>/10</span></div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color }}>{esg.rating}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681' }}>ESG integration score</div>
+        </div>
+      </div>
+      <p style={{ fontSize: 13, color: '#8b949e', lineHeight: 1.7 }}>{esg.brief}</p>
+      {esg.frameworks?.length > 0 && (
+        <div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Frameworks & Commitments</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {esg.frameworks.map((f, i) => <Tag key={i} color={color}>{f}</Tag>)}
+          </div>
+        </div>
+      )}
+      {esg.gp_requirements && (
+        <div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>GP Reporting Requirements</div>
+          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.65 }}>{esg.gp_requirements}</div>
+        </div>
+      )}
+      {esg.key_factors?.length > 0 && (
+        <div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Key Factors</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {esg.key_factors.map((f, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <span style={{ color, fontSize: 12, flexShrink: 0, lineHeight: '18px' }}>›</span>
+                <span style={{ fontSize: 12, color: '#e6edf3', lineHeight: 1.55 }}>{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProofFitSection({ fit }) {
+  const color = FIT_COLORS[fit.rating] || '#10b981';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ fontSize: 32, fontWeight: 800, color, lineHeight: 1 }}>{fit.score}<span style={{ fontSize: 16, color: '#484f58' }}>/10</span></div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color }}>{fit.rating}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681' }}>Proof fit score</div>
+        </div>
+      </div>
+      <p style={{ fontSize: 13, color: '#8b949e', lineHeight: 1.7 }}>{fit.rationale}</p>
+      {fit.key_drivers?.length > 0 && (
+        <div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Key Drivers</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {fit.key_drivers.map((d, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <span style={{ color, fontSize: 12, flexShrink: 0, lineHeight: '18px' }}>›</span>
+                <span style={{ fontSize: 12, color: '#e6edf3', lineHeight: 1.55 }}>{d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BriefingView({ briefing, query }) {
+  const { institution, fund_exposures, regulatory, recent_activity, risk_flags, key_contacts, warm_entry_points, esg, proof_fit } = briefing;
+
+  return (
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 60px' }}>
+      {/* Institution header */}
+      <InstitutionHeader institution={institution} fit={proof_fit} esg={esg} />
+
+      {/* Main grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+
+        {/* Fund Exposures - full width */}
+        <SectionCard label={`Fund Exposures (${fund_exposures?.length || 0})`} style={{ gridColumn: '1 / -1' }}>
+          <FundExposures items={fund_exposures} />
+        </SectionCard>
+
+        {/* Regulatory */}
+        <SectionCard label="Regulatory & Jurisdiction">
+          <RegulatorySection regulatory={regulatory} />
+        </SectionCard>
+
+        {/* Recent Activity */}
+        <SectionCard label="Recent Fund Activity">
+          <RecentActivity items={recent_activity} />
+        </SectionCard>
+
+        {/* Risk Flags */}
+        <SectionCard label={`Risk Flags (${risk_flags?.length || 0})`}>
+          <RiskFlags flags={risk_flags} />
+        </SectionCard>
+
+        {/* Key Contacts */}
+        <SectionCard label={`Key Contacts (${key_contacts?.length || 0})`}>
+          <KeyContacts contacts={key_contacts} />
+        </SectionCard>
+
+        {/* Warm Entry Points - full width */}
+        <SectionCard label={`Warm Entry Points (${warm_entry_points?.length || 0})`} style={{ gridColumn: '1 / -1' }}>
+          <WarmEntryPoints points={warm_entry_points} />
+        </SectionCard>
+
+        {/* ESG + Proof Fit side by side */}
+        <SectionCard label="ESG & Impact" style={{ borderColor: (ESG_COLORS[esg?.rating] || '#58a6ff') + '33' }}>
+          {esg
+            ? <EsgSection esg={esg} />
+            : <div style={{ color: '#484f58', fontSize: 12 }}>ESG data not available — restart the server and run a new search</div>
+          }
+        </SectionCard>
+        <SectionCard label="Proof Fit Analysis" style={{ borderColor: (FIT_COLORS[proof_fit?.rating] || '#10b981') + '33' }}>
+          <ProofFitSection fit={proof_fit} />
+        </SectionCard>
+
+      </div>
+
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', textAlign: 'center', marginTop: 8 }}>
+        Briefing generated by Proof Intelligence · Research reflects public information as of the date of generation
+      </div>
+    </div>
+  );
+}
+
+// ── App ────────────────────────────────────────────────────────────────────
+
+function App() {
+  const [phase, setPhase]     = useState('search');  // search | loading | result | error
+  const [query, setQuery]     = useState('');
+  const [briefing, setBriefing] = useState(null);
+  const [error, setError]     = useState('');
+
+  const handleSearch = async (q) => {
+    setQuery(q);
+    setPhase('loading');
+    setError('');
+
+    try {
+      const res = await fetch('/api/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Research failed');
+      setBriefing(data.briefing);
+      setPhase('result');
+    } catch (err) {
+      setError(err.message);
+      setPhase('error');
+    }
+  };
+
+  const handleNew = () => {
+    setPhase('search');
+    setBriefing(null);
+    setQuery('');
+    setError('');
+  };
+
+  return (
+    <div>
+      <TopBar onNew={handleNew} showNew={phase !== 'search'} />
+
+      {phase === 'search' && <SearchView onSearch={handleSearch} />}
+
+      {phase === 'loading' && <LoadingView query={query} />}
+
+      {phase === 'result' && briefing && (
+        <BriefingView briefing={briefing} query={query} />
+      )}
+
+      {phase === 'error' && (
+        <div style={{
+          minHeight: 'calc(100vh - 60px)', display: 'flex',
+          flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
+        }}>
+          <div style={{ fontSize: 13, color: '#f85149', fontFamily: "'DM Mono', monospace" }}>Research failed</div>
+          <div style={{ fontSize: 12, color: '#6e7681', maxWidth: 400, textAlign: 'center' }}>{error}</div>
+          <button onClick={handleNew} style={{
+            marginTop: 8, padding: '10px 20px', background: '#1e242c',
+            border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8,
+            color: '#8b949e', fontFamily: "'Syne', sans-serif", fontSize: 12,
+            fontWeight: 600, cursor: 'pointer',
+          }}>Try Again</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

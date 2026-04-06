@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proof Pipeline — LP Outreach Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:     #0d1117;
+  --navy2:    #161b22;
+  --navy3:    #1e242c;
+  --navy4:    #262e38;
+  --green:    #10b981;
+  --green-dim:#065f46;
+  --white:    #e6edf3;
+  --slate:    #484f58;
+  --slate-l:  #6e7681;
+  --slate-ll: #8b949e;
+  --blue:     #58a6ff;
+  --red:      #f85149;
+  --amber:    #d29922;
+  --border:   rgba(255,255,255,0.07);
+  --border-c: rgba(16,185,129,0.3);
+}
+html, body { height: 100%; background: var(--navy); color: var(--white); font-family: 'Syne', sans-serif; overflow: hidden; }
+
+.topbar {
+  height: 62px; background: var(--navy2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-mark { width: 34px; height: 34px; background: var(--green); border-radius: 9px; display: grid; place-items: center; }
+.logo-mark svg { width: 17px; height: 17px; }
+.logo-name { font-size: 15px; font-weight: 800; letter-spacing: -0.4px; color: #fff; }
+.logo-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--slate-l); margin-left: 4px; }
+.pill { font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 13px; border-radius: 100px; border: 1px solid var(--border-c); color: var(--green); letter-spacing: 0.5px; }
+
+.shell { display: grid; grid-template-columns: 320px 1fr 460px; height: calc(100vh - 62px); overflow: hidden; }
+
+.panel { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+.panel:last-child { border-right: none; }
+.panel-head { padding: 16px 20px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.panel-title { font-size: 10px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--slate-l); }
+.panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+.panel-body::-webkit-scrollbar { width: 3px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--navy4); border-radius: 2px; }
+
+.project-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s; background: var(--navy2); }
+.project-card:hover { border-color: var(--border-c); background: var(--navy3); }
+.project-card.active { border-color: var(--border-c); background: var(--navy3); box-shadow: inset 3px 0 0 var(--green); }
+.pc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.pc-name { font-size: 12px; font-weight: 700; color: #fff; line-height: 1.35; }
+.pc-badge { font-family: 'DM Mono', monospace; font-size: 9px; padding: 3px 8px; border-radius: 100px; white-space: nowrap; flex-shrink: 0; }
+.badge-final   { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.badge-first   { background: rgba(88,166,255,0.1); color: var(--blue); border: 1px solid rgba(88,166,255,0.25); }
+.badge-raising { background: rgba(210,153,34,0.1); color: var(--amber); border: 1px solid rgba(210,153,34,0.25); }
+.pc-gp { font-size: 11px; color: var(--green); font-weight: 600; margin-bottom: 5px; }
+.pc-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--slate-l); display: flex; gap: 10px; flex-wrap: wrap; }
+
+.add-btn { width: 100%; padding: 12px; background: transparent; border: 1px dashed rgba(255,255,255,0.12); border-radius: 12px; color: var(--slate-l); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
+.add-btn:hover { border-color: var(--green); color: var(--green); background: rgba(16,185,129,0.04); }
+
+.add-form { display: none; background: var(--navy2); border: 1px solid var(--border-c); border-radius: 12px; padding: 16px; margin-bottom: 10px; flex-direction: column; gap: 12px; }
+.add-form.open { display: flex; }
+.form-row { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--slate-l); }
+.form-input, .form-select, .form-textarea { background: var(--navy3); border: 1px solid var(--border); border-radius: 8px; color: var(--white); font-family: 'Syne', sans-serif; font-size: 12px; padding: 9px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--border-c); }
+.form-textarea { resize: none; line-height: 1.6; }
+.form-select option { background: var(--navy3); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-actions { display: flex; gap: 8px; }
+.btn-save { flex: 1; padding: 9px; background: var(--green); color: #000; border: none; border-radius: 8px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+.btn-save:hover { opacity: 0.85; }
+.btn-cancel { padding: 9px 16px; background: transparent; color: var(--slate-l); border: 1px solid var(--border); border-radius: 8px; font-family: 'Syne', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.btn-cancel:hover { border-color: var(--slate-l); color: var(--white); }
+
+.no-sel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--slate); text-align: center; padding: 28px; }
+.no-sel p { font-size: 13px; line-height: 1.7; }
+
+.project-detail { padding: 18px 20px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+.detail-name { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; letter-spacing: -0.3px; line-height: 1.3; }
+.detail-gp { font-size: 11px; color: var(--green); font-weight: 600; margin-bottom: 10px; }
+.detail-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.detail-chip { font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--border); color: var(--slate-l); background: var(--navy3); }
+.detail-desc { font-size: 11px; color: var(--slate-ll); line-height: 1.7; }
+
+.section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--slate); padding: 12px 0 8px; border-top: 1px solid var(--border); margin-top: 8px; }
+
+.tone-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.tone-chip { font-size: 11px; font-weight: 600; padding: 5px 13px; border-radius: 100px; border: 1px solid var(--border); color: var(--slate-l); background: var(--navy3); cursor: pointer; transition: all 0.15s; user-select: none; }
+.tone-chip:hover { border-color: var(--border-c); color: var(--green); }
+.tone-chip.active { background: rgba(16,185,129,0.1); border-color: var(--border-c); color: var(--green); }
+
+.generate-wrap { padding: 14px 20px; flex-shrink: 0; border-top: 1px solid var(--border); }
+.gen-btn { width: 100%; padding: 14px; background: var(--green); color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 0.3px; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.gen-btn:hover { opacity: 0.88; }
+.gen-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.error-banner { background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.22); border-radius: 8px; padding: 10px 14px; font-size: 11px; color: #fca5a5; display: none; font-family: 'DM Mono', monospace; margin-bottom: 12px; }
+.error-banner.show { display: block; }
+
+.tab-bar { display: flex; border-bottom: 1px solid var(--border); padding: 10px 16px; gap: 4px; flex-shrink: 0; overflow-x: auto; background: var(--navy2); }
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab { font-size: 11px; font-weight: 600; padding: 6px 14px; color: var(--slate-l); cursor: pointer; border-radius: 100px; transition: all 0.15s; white-space: nowrap; border: 1px solid transparent; }
+.tab:hover { color: var(--white); background: var(--navy3); }
+.tab.active { color: var(--green); background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); }
+
+.output-body { flex: 1; overflow-y: auto; overflow-x: auto; padding: 20px; }
+.output-body::-webkit-scrollbar { width: 3px; }
+.output-body::-webkit-scrollbar-thumb { background: var(--navy4); border-radius: 2px; }
+
+.empty-output { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--slate); text-align: center; }
+.empty-output p { font-size: 13px; line-height: 1.7; }
+
+.output-pane { display: none; flex-direction: column; gap: 12px; }
+.output-pane.active { display: flex; }
+
+.output-loading { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 300px; color: var(--slate-l); }
+.output-loading.show { display: flex; }
+.spinner { width: 28px; height: 28px; border: 2px solid var(--navy4); border-top-color: var(--green); border-radius: 50%; animation: spin 0.75s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-label { font-family: 'DM Mono', monospace; font-size: 11px; }
+
+.subject-row { background: var(--navy3); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+.subject-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--slate); margin-bottom: 5px; }
+.subject-text { font-size: 14px; font-weight: 600; color: #fff; }
+.message-box { background: var(--navy2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 300; color: var(--slate-ll); line-height: 1.9; white-space: pre-wrap; }
+.char-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--slate); text-align: right; }
+.char-count span { color: var(--blue); font-weight: 500; }
+.output-actions { display: flex; gap: 8px; }
+.copy-btn { flex: 1; padding: 11px; background: var(--navy3); color: var(--slate-ll); border: 1px solid var(--border); border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; text-align: center; }
+.copy-btn:hover { border-color: var(--border-c); color: var(--green); }
+.copy-btn.copied { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); color: var(--green); }
+.regen-btn { padding: 11px 16px; background: transparent; color: var(--slate-l); border: 1px solid var(--border); border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.regen-btn:hover { border-color: var(--slate-l); color: var(--white); }
+.limit-note { background: var(--navy3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--slate-l); }
+
+/* === DOSSIER === */
+.dossier-card { background: var(--navy3); border: 1px solid var(--border-c); border-radius: 10px; padding: 14px; display: none; flex-direction: column; gap: 11px; margin-bottom: 4px; }
+.dossier-card.show { display: flex; }
+.dossier-loading-row { display: none; align-items: center; gap: 8px; padding: 8px 0 4px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--slate-l); }
+.dossier-loading-row.show { display: flex; }
+.dossier-sec { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--green); margin-bottom: 5px; }
+.dossier-text { font-size: 11px; color: var(--slate-ll); line-height: 1.6; }
+.dossier-pains { display: flex; flex-direction: column; gap: 4px; }
+.dossier-pain { font-size: 11px; color: var(--slate-ll); line-height: 1.5; padding-left: 12px; position: relative; }
+.dossier-pain::before { content: '›'; position: absolute; left: 0; color: var(--green-dim); font-size: 14px; line-height: 1.2; }
+.score-row { display: flex; gap: 6px; }
+.score-item { flex: 1; background: var(--navy2); border: 1px solid var(--border); border-radius: 6px; padding: 8px; text-align: center; }
+.score-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--slate-l); margin-bottom: 4px; }
+.score-num { font-size: 20px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.score-reason { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--slate-l); line-height: 1.4; }
+.angle-box { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 6px; padding: 9px 11px; font-size: 11px; color: var(--white); line-height: 1.55; }
+.analyse-btn { width: 100%; padding: 8px; background: transparent; border: 1px solid var(--border-c); border-radius: 6px; color: var(--green); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
+.analyse-btn:hover { background: rgba(16,185,129,0.06); }
+.analyse-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* === PIPELINE BUTTON + HISTORY === */
+.pipeline-add-btn { width: 100%; padding: 8px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--slate-l); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; margin-top: 8px; text-align: center; }
+.pipeline-add-btn:hover { border-color: var(--green); color: var(--green); }
+.pipeline-add-btn.added { border-color: rgba(16,185,129,0.3); color: var(--green); background: rgba(16,185,129,0.05); }
+.history-badge { display: none; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--blue); background: rgba(88,166,255,0.07); border: 1px solid rgba(88,166,255,0.2); border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; }
+.history-badge.show { display: flex; }
+
+/* === LEAD LIST === */
+.leads-bar { padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.leads-gen-btn { flex: 1; padding: 7px 12px; background: transparent; border: 1px solid var(--border-c); border-radius: 6px; color: var(--green); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.leads-gen-btn:hover { background: rgba(16,185,129,0.06); }
+.leads-gen-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.leads-loading-row { display: none; align-items: center; gap: 8px; padding: 8px 0 4px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--slate-l); }
+.leads-loading-row.show { display: flex; }
+.leads-section { display: none; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.leads-section.show { display: flex; }
+.leads-section-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 7px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
+.leads-section-title { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--slate-l); }
+.leads-collapse-btn { font-size: 10px; color: var(--slate); cursor: pointer; background: none; border: none; font-family: 'Syne', sans-serif; padding: 0; }
+.leads-collapse-btn:hover { color: var(--white); }
+.lead-card { background: var(--navy3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; transition: border-color 0.15s; }
+.lead-card:hover { border-color: var(--border-c); }
+.lead-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+.lead-name { font-size: 12px; font-weight: 700; color: #fff; line-height: 1.3; }
+.lead-use-btn { font-size: 10px; font-weight: 700; color: #000; background: var(--green); border: none; border-radius: 4px; padding: 3px 9px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; flex-shrink: 0; }
+.lead-use-btn:hover { opacity: 0.85; }
+.lead-title { font-size: 11px; color: var(--green); font-weight: 600; }
+.lead-company { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--slate-l); }
+.lead-type-badge { font-family: 'DM Mono', monospace; font-size: 9px; padding: 2px 7px; border-radius: 100px; display: inline-block; margin-top: 2px; }
+.badge-lp { background: rgba(88,166,255,0.1); color: var(--blue); border: 1px solid rgba(88,166,255,0.2); }
+.badge-gp { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+.lead-relevance { font-size: 10px; color: var(--slate-ll); line-height: 1.5; margin-top: 3px; }
+
+/* === KANBAN === */
+#pane-pipeline { display: none; }
+#pane-pipeline.active { display: block; }
+.kanban-wrap { display: flex; gap: 10px; padding: 2px 0 8px; min-width: max-content; }
+.k-col { width: 172px; flex-shrink: 0; }
+.k-col-head { font-size: 9px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: var(--slate-l); padding: 6px 9px; background: var(--navy3); border-radius: 7px 7px 0 0; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.k-count { background: var(--navy4); border-radius: 100px; padding: 1px 6px; font-size: 9px; color: var(--slate-ll); }
+.k-drop { min-height: 80px; border-radius: 0 0 7px 7px; transition: background 0.15s; padding: 2px; }
+.k-drop.drag-over { background: rgba(16,185,129,0.04); outline: 1px dashed var(--border-c); border-radius: 6px; }
+.k-card { background: var(--navy2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 10px; margin-bottom: 6px; cursor: grab; transition: border-color 0.15s; }
+.k-card:hover { border-color: var(--border-c); }
+.k-card:active { cursor: grabbing; opacity: 0.75; }
+.k-card-name { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.k-card-company { font-size: 10px; color: var(--green); margin-bottom: 3px; }
+.k-card-project { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--slate-l); line-height: 1.4; margin-bottom: 6px; }
+.k-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.k-card-date { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--slate); flex-shrink: 0; }
+.k-advance { font-size: 9px; font-weight: 600; color: var(--slate-l); border: 1px solid var(--border); background: transparent; border-radius: 4px; padding: 2px 6px; cursor: pointer; transition: all 0.15s; font-family: 'Syne', sans-serif; white-space: nowrap; }
+.k-advance:hover { border-color: var(--green); color: var(--green); }
+.k-remove { font-size: 11px; color: var(--slate); border: none; background: transparent; cursor: pointer; padding: 2px 4px; line-height: 1; flex-shrink: 0; }
+.k-remove:hover { color: var(--red); }
+.k-empty { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--slate); text-align: center; padding: 16px 8px; border: 1px dashed var(--border); border-radius: 6px; }
+.k-won { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--green); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 14 14" fill="none">
+        <path d="M3 7h8M7 3v8" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="7" cy="7" r="5.5" stroke="#000" stroke-width="1.4"/>
+      </svg>
+    </div>
+    <span class="logo-name">Proof Pipeline</span>
+    <span class="logo-sub">/ lp outreach engine</span>
+  </div>
+  <span class="pill">PROOF PRIVATE MARKETS</span>
+</div>
+
+<div class="shell">
+
+  <!-- COL 1: FUND FEED -->
+  <div class="panel" style="background:var(--navy2);">
+    <div class="panel-head"><div class="panel-title">Fund Feed</div></div>
+    <div class="panel-body">
+      <div class="add-form" id="add-form">
+        <div class="form-row"><label class="form-label">Fund Name</label><input class="form-input" id="f-name" placeholder="e.g. Blackstone Real Estate Partners XI"></div>
+        <div class="form-row"><label class="form-label">GP / Fund Manager</label><input class="form-input" id="f-gp" placeholder="e.g. Blackstone"></div>
+        <div class="form-grid">
+          <div class="form-row"><label class="form-label">Strategy</label>
+            <select class="form-select" id="f-strategy">
+              <option>Private Equity</option>
+              <option>Venture Capital</option>
+              <option>Infrastructure</option>
+              <option>Private Credit</option>
+              <option>Real Assets</option>
+              <option>Growth Equity</option>
+              <option>Real Estate PE</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-row"><label class="form-label">Fund Size</label><input class="form-input" id="f-size" placeholder="$10B"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label class="form-label">Close Type</label>
+            <select class="form-select" id="f-close">
+              <option>Final Close</option>
+              <option>First Close</option>
+              <option>Fundraising</option>
+              <option>Announced</option>
+            </select>
+          </div>
+          <div class="form-row"><label class="form-label">Geography</label><input class="form-input" id="f-geo" placeholder="Global"></div>
+        </div>
+        <div class="form-row"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes" rows="2" placeholder="LP base, key governance concerns, ESG requirements..."></textarea></div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveProject()">Add Fund</button>
+          <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+        </div>
+      </div>
+      <div id="cards-container"></div>
+      <button class="add-btn" onclick="openForm()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Add fund
+      </button>
+    </div>
+  </div>
+
+  <!-- COL 2: CONTACT + SETTINGS -->
+  <div class="panel" style="background:var(--navy2);">
+    <div id="no-sel" class="no-sel">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style="opacity:0.25">
+        <rect x="6" y="8" width="28" height="24" rx="3" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M13 16h14M13 22h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <p>Select a fund to begin</p>
+    </div>
+    <div id="contact-content" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="project-detail" id="project-detail"></div>
+      <div class="leads-bar">
+        <button class="leads-gen-btn" id="leads-gen-btn" onclick="generateLeads()">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 10c0-2.2 2.2-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Generate 25 Leads
+        </button>
+      </div>
+      <div class="panel-body">
+
+        <!-- LEAD LIST -->
+        <div class="leads-loading-row" id="leads-loading">
+          <div class="spinner" style="width:14px;height:14px;border-width:1.5px;"></div>
+          <span>Finding leads...</span>
+        </div>
+        <div class="leads-section" id="leads-section">
+          <div class="leads-section-head">
+            <span class="leads-section-title" id="leads-section-title">25 Leads</span>
+            <button class="leads-collapse-btn" onclick="toggleLeads()">Hide ↑</button>
+          </div>
+          <div id="leads-list"></div>
+        </div>
+
+        <!-- DOSSIER -->
+        <div class="dossier-loading-row" id="dossier-loading">
+          <div class="spinner" style="width:14px;height:14px;border-width:1.5px;"></div>
+          <span>Analysing prospect...</span>
+        </div>
+        <div class="dossier-card" id="dossier-card"></div>
+
+        <div class="section-label" style="border-top:none;margin-top:0;padding-top:0;">Contact Details</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <div class="form-row"><label class="form-label">Full Name</label><input class="form-input" id="c-name" placeholder="Sarah Whitfield" oninput="checkHistory()"></div>
+          <div class="form-row"><label class="form-label">Job Title</label><input class="form-input" id="c-title" placeholder="Head of Private Markets"></div>
+          <div class="form-row"><label class="form-label">Institution</label><input class="form-input" id="c-company" placeholder="Auto-filled" oninput="checkHistory()"></div>
+          <div class="form-row">
+            <label class="form-label">Contact Type</label>
+            <div class="tone-row" id="contact-type-row">
+              <span class="tone-chip active" data-ctype="LP — Institutional Investor">LP</span>
+              <span class="tone-chip" data-ctype="GP — Fund Manager">GP</span>
+            </div>
+          </div>
+        </div>
+        <button class="analyse-btn" id="analyse-btn" onclick="analyseDossier()">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.4"/><path d="M6 4v3M6 8.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Analyse Prospect
+        </button>
+
+        <div class="section-label">Outreach Settings</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <div class="form-row">
+            <label class="form-label">Sender</label>
+            <div class="tone-row" id="sender-row">
+              <span class="tone-chip active" data-sender="Fleur at Proof Private Markets">Fleur</span>
+              <span class="tone-chip" data-sender="Matthew Hudson, Founder of Proof Private Markets">Matthew Hudson</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Tone</label>
+            <div class="tone-row">
+              <span class="tone-chip active" data-tone="direct and credible">Direct</span>
+              <span class="tone-chip" data-tone="warm and consultative">Warm</span>
+              <span class="tone-chip" data-tone="concise and no-fluff">Concise</span>
+              <span class="tone-chip" data-tone="data-driven and analytical">Data-driven</span>
+            </div>
+          </div>
+          <div class="form-row"><label class="form-label">Extra context (optional)</label><textarea class="form-textarea" id="c-context" rows="2" placeholder="Specific angle, shared connection, recent news..."></textarea></div>
+        </div>
+      </div>
+      <div class="generate-wrap">
+        <div class="error-banner" id="gen-error">Fill in contact name, title, and institution first.</div>
+        <button class="gen-btn" id="gen-btn" onclick="generateAll()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.5 5.5H13L9.5 8.5L11 13L7 10.5L3 13L4.5 8.5L1 5.5H5.5L7 1Z" fill="currentColor"/></svg>
+          Generate All Outreach
+        </button>
+        <button class="pipeline-add-btn" id="pipeline-add-btn" onclick="addToPipeline()">+ Add to Pipeline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COL 3: OUTPUT -->
+  <div class="panel" style="background:var(--navy);">
+    <div class="panel-head"><div class="panel-title">Output</div></div>
+    <div class="tab-bar">
+      <div class="tab active" data-tab="email" onclick="switchTab('email')">Cold Email</div>
+      <div class="tab" data-tab="linkedin" onclick="switchTab('linkedin')">LinkedIn DM</div>
+      <div class="tab" data-tab="connect" onclick="switchTab('connect')">Connect Note</div>
+      <div class="tab" data-tab="followup" onclick="switchTab('followup')">Follow-up</div>
+      <div class="tab" data-tab="pipeline" onclick="switchTab('pipeline')">Pipeline</div>
+    </div>
+    <div class="output-body">
+      <div class="history-badge" id="history-badge">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1a5 5 0 100 10A5 5 0 006 1zm0 3v3l2 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span id="history-text">Previously generated</span>
+      </div>
+      <div class="empty-output" id="empty-output">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" style="opacity:0.2">
+          <path d="M8 36V14l14-6 14 6v22H8Z" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M16 36V26h12v10" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M16 20h4M24 20h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        <p>Select a fund, fill in<br>contact details, and generate</p>
+      </div>
+      <div class="output-loading" id="output-loading">
+        <div class="spinner"></div>
+        <div class="loading-label" id="loading-label">Writing outreach...</div>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="output-pane" id="pane-email">
+        <div class="subject-row"><div class="subject-lbl">Subject line</div><div class="subject-text" id="email-subject"></div></div>
+        <div class="message-box" id="email-body"></div>
+        <div class="char-count" id="email-chars"></div>
+        <div class="output-actions">
+          <button class="copy-btn" onclick="copyPane('email')">Copy email</button>
+          <button class="regen-btn" onclick="regenPane('email')">↻ Regen</button>
+        </div>
+      </div>
+
+      <!-- LINKEDIN DM -->
+      <div class="output-pane" id="pane-linkedin">
+        <div class="message-box" id="linkedin-body"></div>
+        <div class="char-count" id="linkedin-chars"></div>
+        <div class="output-actions">
+          <button class="copy-btn" onclick="copyPane('linkedin')">Copy message</button>
+          <button class="regen-btn" onclick="regenPane('linkedin')">↻ Regen</button>
+        </div>
+      </div>
+
+      <!-- CONNECT NOTE -->
+      <div class="output-pane" id="pane-connect">
+        <div class="limit-note">LinkedIn connection notes are capped at 300 characters.</div>
+        <div class="message-box" id="connect-body"></div>
+        <div class="char-count" id="connect-chars"></div>
+        <div class="output-actions">
+          <button class="copy-btn" onclick="copyPane('connect')">Copy note</button>
+          <button class="regen-btn" onclick="regenPane('connect')">↻ Regen</button>
+        </div>
+      </div>
+
+      <!-- FOLLOW-UP -->
+      <div class="output-pane" id="pane-followup">
+        <div class="subject-row"><div class="subject-lbl">Subject line</div><div class="subject-text" id="followup-subject"></div></div>
+        <div class="message-box" id="followup-body"></div>
+        <div class="char-count" id="followup-chars"></div>
+        <div class="output-actions">
+          <button class="copy-btn" onclick="copyPane('followup')">Copy follow-up</button>
+          <button class="regen-btn" onclick="regenPane('followup')">↻ Regen</button>
+        </div>
+      </div>
+
+      <!-- PIPELINE -->
+      <div id="pane-pipeline"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FUNDS = [
+  { id:1, name:"Blackstone Real Estate Partners X", gp:"Blackstone", strategy:"Real Estate PE", size:"$30.4B", closeType:"Final Close", geography:"Global", notes:"Largest-ever real estate PE fund. Over 300 LP investors across pension funds, sovereign wealth funds, endowments, and family offices globally. Complex LP base with diverse side letter requirements and ESG reporting obligations across multiple jurisdictions. LP governance demands rising post-close." },
+  { id:2, name:"Apollo Infrastructure Equity Fund II", gp:"Apollo Global Management", strategy:"Infrastructure", size:"$6.5B", closeType:"Final Close", geography:"North America / Europe", notes:"Infrastructure equity strategy targeting digital infrastructure, energy transition, and transportation. LPs include large US pension plans and European insurance companies. Strong ESG and sustainability reporting requirements. Complex multi-jurisdiction deal structures requiring enhanced LP transparency." },
+  { id:3, name:"KKR Global Infrastructure Investors V", gp:"KKR", strategy:"Infrastructure", size:"$6.4B", closeType:"Final Close", geography:"Global", notes:"KKR flagship infrastructure strategy. LP base includes major US state pension systems and sovereign wealth funds. Complex multi-jurisdiction deal structures. LPs demanding enhanced transparency and risk monitoring across portfolio companies. ESG reporting increasingly scrutinised by LP investment committees." },
+  { id:4, name:"Thoma Bravo Fund XVI", gp:"Thoma Bravo", strategy:"PE — Technology", size:"~$10B", closeType:"First Close", geography:"North America", notes:"Flagship software buyout fund from top-tier tech PE firm. LPs include university endowments, insurance companies, and large family offices. Technology-sector concentration risk is a primary LP governance concern. First close creates early-mover opportunity for risk monitoring conversations." },
+  { id:5, name:"EQT X", gp:"EQT AB", strategy:"Private Equity", size:"€22B", closeType:"Final Close", geography:"Europe / Global", notes:"One of the largest European PE raises ever. Strong sustainability reporting requirements from Nordic LP base. SFDR Article 8 classification adds compliance complexity for LPs. LPs subject to detailed ESG, operational, and legal due diligence obligations on an ongoing basis." },
+  { id:6, name:"General Atlantic Capital Partners Fund", gp:"General Atlantic", strategy:"Growth Equity", size:"$7.0B", closeType:"Final Close", geography:"Global", notes:"GA core growth equity vehicle targeting technology-enabled businesses. Diverse LP base of sovereign wealth funds, public pensions, and family offices. LPs seeking stronger alignment monitoring as fund scales. GP reporting quality varies and LPs are struggling to benchmark risk across their broader private markets portfolio." }
+];
+
+const STAGES = [
+  { key:'identified', label:'Identified' },
+  { key:'contacted',  label:'Contacted' },
+  { key:'replied',    label:'Replied' },
+  { key:'demo',       label:'Demo Booked' }
+];
+
+let projects        = [...FUNDS];
+let selectedProject = null;
+let activeTone      = "direct and credible";
+let activeSender    = "Fleur at Proof Private Markets";
+let activeContactType = "LP — Institutional Investor";
+let activeTab       = "email";
+let gen             = {};
+let nextId          = 20;
+let dossier         = null;
+let leads           = [];
+let leadsVisible    = true;
+
+let pipeline        = JSON.parse(localStorage.getItem('proof_pipeline') || '[]');
+let pipelineNextId  = parseInt(localStorage.getItem('proof_pipeline_nid') || '1');
+let outreachHistory = JSON.parse(localStorage.getItem('proof_history') || '{}');
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function contactKey() {
+  const name    = (document.getElementById('c-name').value    || '').trim().toLowerCase();
+  const company = (document.getElementById('c-company').value || '').trim().toLowerCase();
+  return `${selectedProject?.id ?? 0}|${name}|${company}`;
+}
+
+function savePipeline() {
+  localStorage.setItem('proof_pipeline',     JSON.stringify(pipeline));
+  localStorage.setItem('proof_pipeline_nid', pipelineNextId);
+}
+
+// ── fund feed ─────────────────────────────────────────────────────────────────
+
+function badgeClass(closeType) {
+  if (closeType === 'Final Close') return 'badge-final';
+  if (closeType === 'First Close') return 'badge-first';
+  return 'badge-raising';
+}
+
+function renderProjects() {
+  const c = document.getElementById('cards-container');
+  c.innerHTML = '';
+  projects.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'project-card' + (selectedProject?.id === p.id ? ' active' : '');
+    el.onclick = () => selectProject(p);
+    el.innerHTML = `
+      <div class="pc-top">
+        <div class="pc-name">${p.name}</div>
+        <span class="pc-badge ${badgeClass(p.closeType)}">${p.closeType}</span>
+      </div>
+      <div class="pc-gp">${p.gp}</div>
+      <div class="pc-meta"><span>${p.strategy}</span><span>${p.size}</span><span>${p.geography}</span></div>
+    `;
+    c.appendChild(el);
+  });
+}
+
+function selectProject(p) {
+  selectedProject = p;
+  renderProjects();
+  document.getElementById('no-sel').style.display = 'none';
+  const cc = document.getElementById('contact-content');
+  cc.style.display = 'flex';
+
+  const closeColor = p.closeType === 'Final Close' ? 'var(--green)' : p.closeType === 'First Close' ? 'var(--blue)' : 'var(--amber)';
+  const closeBorder = p.closeType === 'Final Close' ? 'rgba(16,185,129,0.3)' : p.closeType === 'First Close' ? 'rgba(88,166,255,0.3)' : 'rgba(210,153,34,0.3)';
+
+  document.getElementById('project-detail').innerHTML = `
+    <div class="detail-name">${p.name}</div>
+    <div class="detail-gp">${p.gp}</div>
+    <div class="detail-chips">
+      <span class="detail-chip">${p.strategy}</span>
+      <span class="detail-chip">${p.size}</span>
+      <span class="detail-chip">${p.geography}</span>
+      <span class="detail-chip" style="color:${closeColor};border-color:${closeBorder}">${p.closeType}</span>
+    </div>
+    <div class="detail-desc">${p.notes}</div>
+  `;
+  document.getElementById('c-company').value = p.gp;
+  // reset dossier
+  dossier = null;
+  document.getElementById('dossier-card').classList.remove('show');
+  document.getElementById('dossier-loading').classList.remove('show');
+  // reset leads
+  leads = [];
+  leadsVisible = true;
+  document.getElementById('leads-section').classList.remove('show');
+  document.getElementById('leads-loading').classList.remove('show');
+  document.getElementById('leads-gen-btn').innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 10c0-2.2 2.2-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Generate 25 Leads`;
+  // reset pipeline button
+  resetPipelineBtn();
+  // reset output, switch to email tab
+  gen = {};
+  activeTab = 'email';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'email'));
+  showEmpty();
+  checkHistory();
+}
+
+function openForm()  { document.getElementById('add-form').classList.add('open'); }
+function closeForm() {
+  document.getElementById('add-form').classList.remove('open');
+  ['f-name','f-gp','f-size','f-geo','f-notes'].forEach(id => document.getElementById(id).value = '');
+}
+function saveProject() {
+  const name = document.getElementById('f-name').value.trim();
+  const gp   = document.getElementById('f-gp').value.trim();
+  if (!name || !gp) return;
+  const p = {
+    id: nextId++, name, gp,
+    strategy: document.getElementById('f-strategy').value,
+    size:     document.getElementById('f-size').value.trim() || 'TBC',
+    closeType:document.getElementById('f-close').value,
+    geography:document.getElementById('f-geo').value.trim() || 'TBC',
+    notes:    document.getElementById('f-notes').value.trim() || 'New fund.'
+  };
+  projects.unshift(p);
+  closeForm();
+  renderProjects();
+  selectProject(p);
+}
+
+// ── tone / sender / contact-type chips ───────────────────────────────────────
+
+document.querySelectorAll('.tone-chip[data-tone]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.closest('.tone-row').querySelectorAll('.tone-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeTone = chip.dataset.tone;
+  });
+});
+
+document.querySelectorAll('.tone-chip[data-sender]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.tone-chip[data-sender]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeSender = chip.dataset.sender;
+  });
+});
+
+document.querySelectorAll('.tone-chip[data-ctype]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.tone-chip[data-ctype]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeContactType = chip.dataset.ctype;
+  });
+});
+
+// ── output tabs ───────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.output-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-pipeline').classList.remove('active');
+
+  if (tab === 'pipeline') {
+    document.getElementById('empty-output').style.display = 'none';
+    document.getElementById('output-loading').classList.remove('show');
+    document.getElementById('pane-pipeline').classList.add('active');
+    renderPipeline();
+  } else if (gen[tab]) {
+    document.getElementById('pane-'+tab).classList.add('active');
+  }
+}
+
+// ── dossier ───────────────────────────────────────────────────────────────────
+
+async function analyseDossier() {
+  const name    = document.getElementById('c-name').value.trim();
+  const title   = document.getElementById('c-title').value.trim();
+  const company = document.getElementById('c-company').value.trim();
+  if (!name || !title || !company || !selectedProject) return;
+
+  const btn        = document.getElementById('analyse-btn');
+  const loadingRow = document.getElementById('dossier-loading');
+  btn.disabled = true;
+  loadingRow.classList.add('show');
+  document.getElementById('dossier-card').classList.remove('show');
+
+  const p = selectedProject;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 900,
+        system: 'You are a B2B sales intelligence analyst for a private markets fintech. Output ONLY valid JSON, no markdown, no preamble.',
+        messages: [{ role: 'user', content:
+`Analyse this prospect for a Proof Private Markets sales rep. Proof is a tech-enabled risk monitoring and reporting platform for LPs and GPs in private markets.
+FUND: ${p.name} | GP: ${p.gp} | ${p.strategy} | ${p.size} | ${p.closeType} | ${p.geography}
+NOTES: ${p.notes}
+CONTACT: ${name}, ${title} at ${company} (${activeContactType})
+
+Output JSON (no markdown):
+{"role_summary":"2-3 sentence summary of this person's likely day-to-day responsibilities and their exposure to fund governance and risk monitoring","pain_points":["pain 1","pain 2","pain 3"],"scores":{"fit":{"score":8,"reason":"one-line reason"},"urgency":{"score":7,"reason":"one-line reason"},"timing":{"score":6,"reason":"one-line reason"}},"outreach_angle":"The single most compelling hook for this specific person at this fund"}`
+        }]
+      })
+    });
+    const data = await res.json();
+    const raw  = data.content?.[0]?.text || '';
+    dossier = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderDossier();
+  } catch(e) {
+    // silently fail
+  } finally {
+    btn.disabled = false;
+    loadingRow.classList.remove('show');
+  }
+}
+
+function renderDossier() {
+  if (!dossier) return;
+  const sc = n => n >= 8 ? 'var(--green)' : n >= 5 ? 'var(--blue)' : 'var(--red)';
+  const card = document.getElementById('dossier-card');
+  card.innerHTML = `
+    <div>
+      <div class="dossier-sec">Role Summary</div>
+      <div class="dossier-text">${dossier.role_summary}</div>
+    </div>
+    <div>
+      <div class="dossier-sec">Top Pain Points</div>
+      <div class="dossier-pains">
+        ${dossier.pain_points.map(p => `<div class="dossier-pain">${p}</div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="dossier-sec">Account Score</div>
+      <div class="score-row">
+        <div class="score-item">
+          <div class="score-label">Fit</div>
+          <div class="score-num" style="color:${sc(dossier.scores.fit.score)}">${dossier.scores.fit.score}</div>
+          <div class="score-reason">${dossier.scores.fit.reason}</div>
+        </div>
+        <div class="score-item">
+          <div class="score-label">Urgency</div>
+          <div class="score-num" style="color:${sc(dossier.scores.urgency.score)}">${dossier.scores.urgency.score}</div>
+          <div class="score-reason">${dossier.scores.urgency.reason}</div>
+        </div>
+        <div class="score-item">
+          <div class="score-label">Timing</div>
+          <div class="score-num" style="color:${sc(dossier.scores.timing.score)}">${dossier.scores.timing.score}</div>
+          <div class="score-reason">${dossier.scores.timing.reason}</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="dossier-sec">Best Outreach Angle</div>
+      <div class="angle-box">${dossier.outreach_angle}</div>
+    </div>
+  `;
+  card.classList.add('show');
+}
+
+// ── outreach history ──────────────────────────────────────────────────────────
+
+function checkHistory() {
+  const entry  = outreachHistory[contactKey()];
+  const badge  = document.getElementById('history-badge');
+  const text   = document.getElementById('history-text');
+  if (entry?.timestamp) {
+    const d = new Date(entry.timestamp);
+    const s = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    text.textContent = `Previously generated on ${s} — regenerating will overwrite`;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+}
+
+// ── pipeline ──────────────────────────────────────────────────────────────────
+
+function addToPipeline() {
+  const name    = document.getElementById('c-name').value.trim();
+  const title   = document.getElementById('c-title').value.trim();
+  const company = document.getElementById('c-company').value.trim();
+  if (!name || !company || !selectedProject) return;
+
+  const exists = pipeline.find(c =>
+    c.contactName.toLowerCase() === name.toLowerCase() &&
+    c.company.toLowerCase()     === company.toLowerCase() &&
+    c.projectId                 === selectedProject.id
+  );
+  if (exists) { updatePipelineBtn(exists.stage); return; }
+
+  pipeline.push({
+    id: pipelineNextId++,
+    contactName:  name,
+    contactTitle: title,
+    company,
+    projectName:  selectedProject.name,
+    projectId:    selectedProject.id,
+    stage:        'identified',
+    dateAdded:    new Date().toISOString()
+  });
+  savePipeline();
+  updatePipelineBtn('identified');
+}
+
+function updatePipelineBtn(stage) {
+  const labels = { identified:'In Pipeline — Identified', contacted:'In Pipeline — Contacted', replied:'In Pipeline — Replied', demo:'In Pipeline — Demo Booked' };
+  const btn = document.getElementById('pipeline-add-btn');
+  btn.textContent = labels[stage] || 'Added ✓';
+  btn.classList.add('added');
+}
+
+function resetPipelineBtn() {
+  const btn = document.getElementById('pipeline-add-btn');
+  btn.textContent = '+ Add to Pipeline';
+  btn.classList.remove('added');
+}
+
+function renderPipeline() {
+  const pane = document.getElementById('pane-pipeline');
+  pane.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'kanban-wrap';
+
+  STAGES.forEach(stage => {
+    const cards = pipeline.filter(c => c.stage === stage.key);
+    const col   = document.createElement('div');
+    col.className = 'k-col';
+
+    const head = document.createElement('div');
+    head.className = 'k-col-head';
+    head.innerHTML = `<span>${stage.label}</span><span class="k-count">${cards.length}</span>`;
+    col.appendChild(head);
+
+    const drop = document.createElement('div');
+    drop.className = 'k-drop';
+    drop.dataset.stage = stage.key;
+
+    drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+    drop.addEventListener('drop', e => {
+      e.preventDefault();
+      drop.classList.remove('drag-over');
+      const id   = parseInt(e.dataTransfer.getData('text/plain'));
+      const card = pipeline.find(c => c.id === id);
+      if (card && card.stage !== stage.key) {
+        card.stage = stage.key;
+        savePipeline();
+        renderPipeline();
+      }
+    });
+
+    if (cards.length === 0) {
+      drop.innerHTML = `<div class="k-empty">Drop here</div>`;
+    } else {
+      cards.forEach(card => {
+        const stageIdx  = STAGES.findIndex(s => s.key === card.stage);
+        const nextStage = STAGES[stageIdx + 1];
+        const dateStr   = new Date(card.dateAdded).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+
+        const el = document.createElement('div');
+        el.className  = 'k-card';
+        el.draggable  = true;
+        el.dataset.id = card.id;
+        el.innerHTML  = `
+          <div class="k-card-name">${card.contactName}</div>
+          <div class="k-card-company">${card.company}</div>
+          <div class="k-card-project">${card.projectName}</div>
+          <div class="k-card-footer">
+            <span class="k-card-date">${dateStr}</span>
+            ${nextStage
+              ? `<button class="k-advance" onclick="advanceCard(${card.id})">→ ${nextStage.label}</button>`
+              : `<span class="k-won">Won ✓</span>`}
+            <button class="k-remove" title="Remove" onclick="removeCard(${card.id})">✕</button>
+          </div>
+        `;
+        el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', card.id));
+        drop.appendChild(el);
+      });
+    }
+
+    col.appendChild(drop);
+    wrap.appendChild(col);
+  });
+
+  pane.appendChild(wrap);
+}
+
+function advanceCard(id) {
+  const card = pipeline.find(c => c.id === id);
+  if (!card) return;
+  const idx = STAGES.findIndex(s => s.key === card.stage);
+  if (idx < STAGES.length - 1) {
+    card.stage = STAGES[idx + 1].key;
+    savePipeline();
+    renderPipeline();
+  }
+}
+
+function removeCard(id) {
+  pipeline = pipeline.filter(c => c.id !== id);
+  savePipeline();
+  renderPipeline();
+}
+
+// ── generate all ──────────────────────────────────────────────────────────────
+
+async function generateAll() {
+  const name    = document.getElementById('c-name').value.trim();
+  const title   = document.getElementById('c-title').value.trim();
+  const company = document.getElementById('c-company').value.trim();
+  const err     = document.getElementById('gen-error');
+  if (!name || !title || !company) { err.classList.add('show'); return; }
+  err.classList.remove('show');
+  if (!selectedProject) return;
+
+  document.getElementById('gen-btn').disabled = true;
+  showLoading("Writing all 4 outreach formats...");
+
+  const context = document.getElementById('c-context').value.trim();
+  const p       = selectedProject;
+
+  const dossierBlock = dossier ? `
+PROSPECT INTEL (use heavily to personalise):
+Role: ${dossier.role_summary}
+Pain points: ${dossier.pain_points.join('; ')}
+Fit ${dossier.scores.fit.score}/10: ${dossier.scores.fit.reason}
+Urgency ${dossier.scores.urgency.score}/10: ${dossier.scores.urgency.reason}
+Timing ${dossier.scores.timing.score}/10: ${dossier.scores.timing.reason}
+Best angle: ${dossier.outreach_angle}` : '';
+
+  const system = `You are a senior B2B sales copywriter for Proof Private Markets — a tech-enabled risk monitoring and reporting platform for institutional investors and fund managers in private markets. You write outreach that is specific, credible, and gets replies from senior LP and GP professionals. No hype, no corporate fluff. Always reference the exact fund.
+
+Proof Private Markets facts: ingests fund documents (LPA, side letters, ESG reports, operational materials); runs automated compliance and risk analysis across five disciplines — law, operations, sustainability, technology, and alignment; produces LP-ready reports and interactive dashboards; acts as a fund governance intelligence layer that shows LPs and GPs exactly where risk is hiding across their portfolio. Founded by Matthew Hudson (Attorney, Investor, Founder). Contact: fleur@proof-pm.io.
+${dossierBlock}
+Output ONLY valid JSON with no markdown, no preamble:
+{"email":{"subject":"string","body":"string"},"linkedin":{"body":"string"},"connect":{"body":"string"},"followup":{"subject":"string","body":"string"}}`;
+
+  const user = `FUND: ${p.name} | GP: ${p.gp} | ${p.strategy} | ${p.size} | ${p.closeType} | ${p.geography}
+NOTES: ${p.notes}
+CONTACT: ${name}, ${title} at ${company} (${activeContactType})
+SENDER: ${activeSender} | TONE: ${activeTone}
+${context ? 'EXTRA: '+context : ''}
+
+Write:
+1. Cold email (180-240 words, specific subject line referencing the fund close and the governance/risk monitoring challenge at this scale)
+2. LinkedIn DM (350-500 chars, peer-to-peer tone, not salesy, references the fund or their role directly)
+3. LinkedIn connection note (STRICT max 295 chars, punchy hook referencing the fund or a specific risk monitoring angle)
+4. Follow-up email (150-200 words, assume no reply, introduce a new angle — e.g. a regulatory shift, LP reporting burden, or a specific risk discipline — different subject line)`;
+
+  try {
+    const res  = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1600, system, messages: [{ role: 'user', content: user }] })
+    });
+    const data   = await res.json();
+    const raw    = data.content?.[0]?.text || '';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    gen = parsed;
+
+    outreachHistory[contactKey()] = { gen: parsed, timestamp: Date.now() };
+    localStorage.setItem('proof_history', JSON.stringify(outreachHistory));
+    checkHistory();
+
+    renderOutput();
+  } catch(e) {
+    showEmpty();
+    err.textContent = 'Generation failed — check connection and try again.';
+    err.classList.add('show');
+  } finally {
+    document.getElementById('gen-btn').disabled = false;
+  }
+}
+
+// ── regen single pane ─────────────────────────────────────────────────────────
+
+async function regenPane(type) {
+  if (!selectedProject) return;
+  const pane    = document.getElementById('pane-'+type);
+  pane.style.opacity = '0.4';
+  const name    = document.getElementById('c-name').value.trim();
+  const title   = document.getElementById('c-title').value.trim();
+  const company = document.getElementById('c-company').value.trim();
+  const context = document.getElementById('c-context').value.trim();
+  const p       = selectedProject;
+  const specs   = {
+    email:    'Cold email 180-240 words. JSON: {"subject":"...","body":"..."}',
+    linkedin: 'LinkedIn DM 350-500 chars peer tone. JSON: {"body":"..."}',
+    connect:  'LinkedIn connection note STRICT max 295 chars. JSON: {"body":"..."}',
+    followup: 'Follow-up email 150-200 words new angle. JSON: {"subject":"...","body":"..."}'
+  };
+  try {
+    const res  = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 600,
+        system: 'You are a B2B sales copywriter for Proof Private Markets. Output ONLY valid JSON no markdown. Proof: ingests LPA/side letters/ESG reports, runs risk analysis across law/operations/sustainability/technology/alignment, produces LP-ready reports and dashboards.',
+        messages: [{ role: 'user', content: `Rewrite the ${type} for: FUND: ${p.name} | GP: ${p.gp} | ${p.strategy} | NOTES: ${p.notes} | CONTACT: ${name} ${title} at ${company} (${activeContactType}) | SENDER: ${activeSender} | TONE: ${activeTone}${context?' | EXTRA: '+context:''}\n${specs[type]}` }]
+      })
+    });
+    const data   = await res.json();
+    const parsed = JSON.parse(data.content?.[0]?.text.replace(/```json|```/g,'').trim()||'{}');
+    gen[type] = parsed;
+    if (outreachHistory[contactKey()]) {
+      outreachHistory[contactKey()].gen = { ...outreachHistory[contactKey()].gen, [type]: parsed };
+      localStorage.setItem('proof_history', JSON.stringify(outreachHistory));
+    }
+    renderOutput();
+  } catch(e) {}
+  finally { pane.style.opacity = '1'; }
+}
+
+// ── render output ─────────────────────────────────────────────────────────────
+
+function renderOutput() {
+  document.getElementById('output-loading').classList.remove('show');
+  document.getElementById('empty-output').style.display = 'none';
+  document.querySelectorAll('.output-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-pipeline').classList.remove('active');
+
+  if (gen.email) {
+    document.getElementById('email-subject').textContent = gen.email.subject;
+    document.getElementById('email-body').textContent    = gen.email.body;
+    const w = gen.email.body.trim().split(/\s+/).length;
+    document.getElementById('email-chars').innerHTML = `<span>${w}</span> words`;
+  }
+  if (gen.linkedin) {
+    document.getElementById('linkedin-body').textContent = gen.linkedin.body;
+    const l = gen.linkedin.body.length;
+    document.getElementById('linkedin-chars').innerHTML = `<span>${l}</span> chars`;
+  }
+  if (gen.connect) {
+    document.getElementById('connect-body').textContent = gen.connect.body;
+    const cc  = gen.connect.body.length;
+    const col = cc > 295 ? 'var(--red)' : cc > 260 ? 'var(--amber)' : 'var(--green)';
+    document.getElementById('connect-chars').innerHTML = `<span style="color:${col}">${cc}</span> / 300 chars`;
+  }
+  if (gen.followup) {
+    document.getElementById('followup-subject').textContent = gen.followup.subject;
+    document.getElementById('followup-body').textContent    = gen.followup.body;
+    const fw = gen.followup.body.trim().split(/\s+/).length;
+    document.getElementById('followup-chars').innerHTML = `<span>${fw}</span> words`;
+  }
+
+  const tabToShow = activeTab !== 'pipeline' ? activeTab : 'email';
+  activeTab = tabToShow;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabToShow));
+  const pane = document.getElementById('pane-'+tabToShow);
+  if (pane && gen[tabToShow]) pane.classList.add('active');
+  else if (gen.email) {
+    activeTab = 'email';
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'email'));
+    document.getElementById('pane-email').classList.add('active');
+  }
+}
+
+// ── copy ──────────────────────────────────────────────────────────────────────
+
+function copyPane(type) {
+  const c = gen[type]; if (!c) return;
+  const text = (type==='email'||type==='followup') ? `Subject: ${c.subject}\n\n${c.body}` : c.body;
+  navigator.clipboard.writeText(text).catch(()=>{});
+  const btn  = event.target;
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!'; btn.classList.add('copied');
+  setTimeout(()=>{ btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+}
+
+// ── empty / loading ───────────────────────────────────────────────────────────
+
+function showEmpty() {
+  document.getElementById('empty-output').style.display = 'flex';
+  document.getElementById('output-loading').classList.remove('show');
+  document.querySelectorAll('.output-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-pipeline').classList.remove('active');
+}
+function showLoading(label) {
+  document.getElementById('empty-output').style.display = 'none';
+  document.querySelectorAll('.output-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-pipeline').classList.remove('active');
+  document.getElementById('loading-label').textContent = label;
+  document.getElementById('output-loading').classList.add('show');
+}
+
+// ── lead list ─────────────────────────────────────────────────────────────────
+
+async function generateLeads() {
+  if (!selectedProject) return;
+  const btn        = document.getElementById('leads-gen-btn');
+  const loadingRow = document.getElementById('leads-loading');
+  btn.disabled = true;
+  loadingRow.classList.add('show');
+  document.getElementById('leads-section').classList.remove('show');
+
+  const p = selectedProject;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3500,
+        system: 'You are a private markets sales intelligence analyst with deep knowledge of institutional investors, fund managers, and the LP/GP ecosystem. Output ONLY valid JSON, no markdown, no preamble.',
+        messages: [{ role: 'user', content:
+`Generate exactly 25 high-value sales leads for Proof Private Markets to target in relation to this fund. Proof is a tech-enabled risk monitoring and reporting platform for LPs and GPs.
+
+FUND: ${p.name}
+GP: ${p.gp}
+Strategy: ${p.strategy} | Size: ${p.size} | Close: ${p.closeType} | Geography: ${p.geography}
+Notes: ${p.notes}
+
+Include a mix of:
+- Senior LP contacts (CIO, Head of Private Markets, Head of Risk, General Counsel, COO, CFO) at pension funds, endowments, sovereign wealth funds, insurance companies, and family offices that are known or likely investors in this fund or similar strategies
+- GP-side contacts at ${p.gp} (CFO, COO, Head of Investor Relations, General Counsel, Head of ESG/Sustainability)
+- Fund administration, legal, and compliance professionals who serve this fund or its LP base
+
+For each lead, classify them as LP or GP. Use real-world knowledge of institutional investors and fund managers in the relevant geography and strategy.
+
+Output JSON (no markdown):
+{"leads":[{"name":"Full Name","title":"Job Title","company":"Company Name","type":"LP or GP","relevance":"One punchy sentence on why this person is a high-priority target for Proof Private Markets on this specific fund"}]}`
+        }]
+      })
+    });
+    const data   = await res.json();
+    const raw    = data.content?.[0]?.text || '';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    leads = parsed.leads || [];
+    renderLeads();
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 10c0-2.2 2.2-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> ↻ Regenerate Leads`;
+  } catch(e) {
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 10c0-2.2 2.2-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Generate 25 Leads`;
+  } finally {
+    btn.disabled = false;
+    loadingRow.classList.remove('show');
+  }
+}
+
+function renderLeads() {
+  if (!leads.length) return;
+  const list = document.getElementById('leads-list');
+  document.getElementById('leads-section-title').textContent = `${leads.length} Leads — ${selectedProject.gp}`;
+  list.innerHTML = leads.map((lead, i) => `
+    <div class="lead-card">
+      <div class="lead-top">
+        <div class="lead-name">${lead.name}</div>
+        <button class="lead-use-btn" onclick="useLead(${i})">Use →</button>
+      </div>
+      <div class="lead-title">${lead.title}</div>
+      <div class="lead-company">${lead.company}</div>
+      <span class="lead-type-badge ${lead.type === 'LP' ? 'badge-lp' : 'badge-gp'}">${lead.type}</span>
+      <div class="lead-relevance">${lead.relevance}</div>
+    </div>
+  `).join('');
+  document.getElementById('leads-section').classList.add('show');
+}
+
+function useLead(i) {
+  const lead = leads[i];
+  if (!lead) return;
+  document.getElementById('c-name').value    = lead.name;
+  document.getElementById('c-title').value   = lead.title;
+  document.getElementById('c-company').value = lead.company;
+  // auto-select contact type chip
+  const ctype = lead.type === 'LP' ? 'LP — Institutional Investor' : 'GP — Fund Manager';
+  document.querySelectorAll('.tone-chip[data-ctype]').forEach(c => {
+    c.classList.toggle('active', c.dataset.ctype === ctype);
+  });
+  activeContactType = ctype;
+  checkHistory();
+  // scroll down to contact section
+  document.getElementById('dossier-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleLeads() {
+  leadsVisible = !leadsVisible;
+  const list = document.getElementById('leads-list');
+  const btn  = document.querySelector('.leads-collapse-btn');
+  list.style.display  = leadsVisible ? '' : 'none';
+  btn.textContent     = leadsVisible ? 'Hide ↑' : 'Show ↓';
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+
+renderProjects();
+</script>
+</body>
+</html>
