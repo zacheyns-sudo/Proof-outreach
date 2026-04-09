@@ -135,6 +135,48 @@ async function researchLP(query) {
   return JSON.parse(text.replace(/```json\n?|```\n?/g, '').trim());
 }
 
+// ── Generate target LP list ───────────────────────────────────────────────────
+
+async function generateTargets({ institution_types, geography, aum_range, strategy_focus, count }) {
+  const criteria = [
+    institution_types?.length ? `Institution types: ${institution_types.join(', ')}` : 'All institution types',
+    `Geography: ${geography || 'Global'}`,
+    `AUM range: ${aum_range || 'Any'}`,
+    strategy_focus?.length ? `Private markets focus: ${strategy_focus.join(', ')}` : 'All strategies',
+  ].join('\n');
+
+  const response = await client.messages.create({
+    model:      'claude-sonnet-4-6',
+    max_tokens: 2500,
+    system: `You are a private markets sales expert for Proof Private Markets — a tech-enabled risk monitoring and reporting platform for institutional LPs. Your job is to identify high-quality LP prospects.
+
+Strong Proof targets: institutions with $500M+ in private markets AUM, multi-manager portfolios (PE/VC/infra/credit), complex LP bases, active ESG or governance requirements, multi-jurisdiction exposure. Ideal prospects feel reporting and compliance pressure from their GPs.
+
+Output ONLY valid JSON, no markdown:
+{
+  "targets": [
+    {
+      "name": "Full official institution name",
+      "type": "pension fund | endowment | family office | sovereign wealth fund | insurance company | development finance institution",
+      "aum": "total AUM e.g. '$45B'",
+      "location": "city, country",
+      "pm_allocation": "estimated private markets allocation e.g. '~$8B (18%)'",
+      "strategies": ["PE", "VC", "Infrastructure", "Private Credit", "Real Assets"],
+      "why": "One compelling sentence on why this institution is a strong Proof prospect — be specific about their portfolio complexity or governance challenge"
+    }
+  ]
+}`,
+    messages: [{
+      role: 'user',
+      content: `Generate exactly ${count || 15} real LP institutions matching these criteria:\n${criteria}\n\nReturn only real, named institutions. Prioritise those most likely to benefit from Proof's risk monitoring platform.`
+    }]
+  });
+
+  const text = response.content.find(b => b.type === 'text')?.text || '';
+  if (!text) throw new Error('Empty response');
+  return JSON.parse(text.replace(/```json\n?|```\n?/g, '').trim());
+}
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.get('/', (req, res) => {
@@ -152,6 +194,42 @@ app.post('/api/research', async (req, res) => {
     res.json({ ok: true, briefing });
   } catch (err) {
     console.error('[research error]', err.message);
+
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/bulk-research', async (req, res) => {
+  const { names } = req.body;
+  if (!Array.isArray(names) || names.length === 0) return res.status(400).json({ error: 'names array required' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+
+  // Research in batches of 3 to stay within rate limits
+  const BATCH = 3;
+  const results = [];
+  for (let i = 0; i < names.length; i += BATCH) {
+    const batch = names.slice(i, i + BATCH);
+    const settled = await Promise.allSettled(batch.map(n => researchLP(n)));
+    settled.forEach((r, j) => {
+      results.push(r.status === 'fulfilled'
+        ? { ok: true,  name: batch[j], briefing: r.value }
+        : { ok: false, name: batch[j], error: r.reason?.message }
+      );
+    });
+    // Small pause between batches
+    if (i + BATCH < names.length) await new Promise(r => setTimeout(r, 1500));
+  }
+
+  res.json({ ok: true, results });
+});
+
+app.post('/api/generate-targets', async (req, res) => {
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+  try {
+    const result = await generateTargets(req.body);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[generate-targets error]', err.message);
     res.status(500).json({ error: err.message });
   }
 });

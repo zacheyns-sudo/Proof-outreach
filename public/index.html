@@ -32,6 +32,7 @@ a:hover { text-decoration: underline; }
 <body>
 <div id="root"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -100,7 +101,7 @@ const S = {
 
 // ── TopBar ─────────────────────────────────────────────────────────────────
 
-function TopBar({ onNew, showNew }) {
+function TopBar({ onNew, showNew, page, setPage }) {
   return (
     <div style={S.topbar}>
       <div style={S.logo}>
@@ -113,15 +114,28 @@ function TopBar({ onNew, showNew }) {
         <span style={S.logoName}>Proof</span>
         <span style={S.logoSub}>/ lp intelligence</span>
       </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0d1117', borderRadius: 8, padding: 4 }}>
+        {['research', 'generator'].map(p => (
+          <button key={p} onClick={() => { setPage(p); if (p === 'research') onNew(); }} style={{
+            padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer',
+            fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600,
+            background: page === p ? '#1e242c' : 'transparent',
+            color: page === p ? '#e6edf3' : '#6e7681',
+            transition: 'all 0.15s',
+          }}>
+            {p === 'research' ? 'Research' : 'Generate Targets'}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {showNew && (
+        {showNew && page === 'research' && (
           <button onClick={onNew} style={{
             padding: '7px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
             borderRadius: 8, color: '#8b949e', fontFamily: "'Syne', sans-serif", fontSize: 12,
             fontWeight: 600, cursor: 'pointer',
-          }}>
-            ← New Research
-          </button>
+          }}>← New Search</button>
         )}
         <span style={S.pill}>PROOF PRIVATE MARKETS</span>
       </div>
@@ -617,10 +631,303 @@ function BriefingView({ briefing, query }) {
   );
 }
 
+// ── Generator Page ─────────────────────────────────────────────────────────
+
+const INST_TYPES = ['Pension Fund', 'Endowment', 'Family Office', 'Sovereign Wealth Fund', 'Insurance Company', 'Development Finance'];
+const GEOGRAPHIES = ['Global', 'North America', 'Europe', 'United Kingdom', 'Asia Pacific', 'Middle East & Africa', 'Latin America'];
+const AUM_RANGES  = ['Any', '$500M – $2B', '$2B – $10B', '$10B – $50B', '$50B+'];
+const STRATEGIES  = ['PE', 'VC', 'Infrastructure', 'Private Credit', 'Real Assets'];
+const COUNTS      = [10, 15, 20, 30];
+
+function MultiToggle({ options, selected, onChange, color }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {options.map(opt => {
+        const active = selected.includes(opt);
+        return (
+          <button key={opt} onClick={() => onChange(active ? selected.filter(s => s !== opt) : [...selected, opt])} style={{
+            padding: '6px 14px', borderRadius: 100, border: `1px solid ${active ? (color || '#10b981') + '60' : 'rgba(255,255,255,0.1)'}`,
+            background: active ? (color || '#10b981') + '14' : 'transparent',
+            color: active ? (color || '#10b981') : '#6e7681',
+            fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}>{opt}</button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SingleToggle({ options, selected, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {options.map(opt => {
+        const active = selected === opt;
+        return (
+          <button key={opt} onClick={() => onChange(opt)} style={{
+            padding: '6px 14px', borderRadius: 100,
+            border: `1px solid ${active ? 'rgba(88,166,255,0.5)' : 'rgba(255,255,255,0.1)'}`,
+            background: active ? 'rgba(88,166,255,0.12)' : 'transparent',
+            color: active ? '#58a6ff' : '#6e7681',
+            fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}>{opt}</button>
+        );
+      })}
+    </div>
+  );
+}
+
+function GeneratorPage({ onSelectLP }) {
+  const [instTypes,  setInstTypes]  = useState([]);
+  const [geography,  setGeography]  = useState('Global');
+  const [aumRange,   setAumRange]   = useState('Any');
+  const [strategies, setStrategies] = useState([]);
+  const [count,      setCount]      = useState(15);
+  const [loading,    setLoading]    = useState(false);
+  const [targets,    setTargets]    = useState([]);
+  const [selected,   setSelected]   = useState(new Set());
+  const [error,      setError]      = useState('');
+  const [exporting,  setExporting]  = useState(false);
+  const [exportMsg,  setExportMsg]  = useState('');
+
+  const generate = async () => {
+    setLoading(true); setTargets([]); setSelected(new Set()); setError('');
+    try {
+      const res = await fetch('/api/generate-targets', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ institution_types: instTypes, geography, aum_range: aumRange, strategy_focus: strategies, count }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setTargets(data.targets || []);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const toggleSelect = (name) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelected(new Set(targets.map(t => t.name)));
+  const clearAll  = () => setSelected(new Set());
+
+  const exportToExcel = async () => {
+    if (selected.size === 0) return;
+    setExporting(true);
+    setExportMsg(`Researching 1 of ${selected.size}...`);
+
+    try {
+      const names = [...selected];
+      // Bulk research all selected LPs
+      const res = await fetch('/api/bulk-research', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ names }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Bulk research failed');
+
+      setExportMsg('Generating Excel...');
+
+      // Build rows for Excel
+      const rows = data.results.map(r => {
+        if (!r.ok) return { 'Institution': r.name, 'Status': 'Research failed: ' + r.error };
+        const b = r.briefing;
+        const contacts = b.key_contacts || [];
+        return {
+          'Institution':              b.institution?.name || r.name,
+          'Type':                     b.institution?.type || '',
+          'AUM':                      b.institution?.aum || '',
+          'HQ':                       b.institution?.hq || '',
+          'PM Allocation':            b.institution?.private_markets_allocation || '',
+          'Investment Focus':         b.institution?.investment_focus || '',
+          'Regulatory Jurisdiction':  b.regulatory?.jurisdiction || '',
+          'Compliance Notes':         b.regulatory?.compliance_notes || '',
+          'ESG Score':                b.esg?.score ?? '',
+          'ESG Rating':               b.esg?.rating || '',
+          'ESG Brief':                b.esg?.brief || '',
+          'ESG Frameworks':           b.esg?.frameworks?.join(', ') || '',
+          'GP ESG Requirements':      b.esg?.gp_requirements || '',
+          'Proof Fit Score':          b.proof_fit?.score ?? '',
+          'Proof Fit Rating':         b.proof_fit?.rating || '',
+          'Proof Fit Rationale':      b.proof_fit?.rationale || '',
+          'Key Drivers':              b.proof_fit?.key_drivers?.join('; ') || '',
+          'Contact 1 – Name':         contacts[0]?.name || '',
+          'Contact 1 – Title':        contacts[0]?.title || '',
+          'Contact 1 – LinkedIn':     contacts[0]?.linkedin || '',
+          'Contact 2 – Name':         contacts[1]?.name || '',
+          'Contact 2 – Title':        contacts[1]?.title || '',
+          'Contact 2 – LinkedIn':     contacts[1]?.linkedin || '',
+          'Contact 3 – Name':         contacts[2]?.name || '',
+          'Contact 3 – Title':        contacts[2]?.title || '',
+          'Contact 3 – LinkedIn':     contacts[2]?.linkedin || '',
+          'Risk Flags':               b.risk_flags?.map(f => `[${f.severity.toUpperCase()}] ${f.flag}`).join(' | ') || '',
+          'Fund Managers':            b.fund_exposures?.map(f => f.manager).join(', ') || '',
+          'Recent Activity':          b.recent_activity?.map(a => `${a.date}: ${a.event}`).join(' | ') || '',
+          'Warm Entry Points':        b.warm_entry_points?.map(w => w.description).join(' | ') || '',
+        };
+      });
+
+      const XLSX = window.XLSX;
+      const ws = XLSX.utils.json_to_sheet(rows);
+
+      // Column widths
+      ws['!cols'] = [
+        {wch:35},{wch:22},{wch:12},{wch:22},{wch:18},{wch:40},{wch:22},{wch:35},
+        {wch:10},{wch:16},{wch:45},{wch:35},{wch:45},
+        {wch:10},{wch:16},{wch:50},{wch:40},
+        {wch:25},{wch:30},{wch:35},{wch:25},{wch:30},{wch:35},{wch:25},{wch:30},{wch:35},
+        {wch:60},{wch:50},{wch:60},{wch:50},
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'LP Intelligence');
+      XLSX.writeFile(wb, `Proof_LP_Intelligence_${new Date().toISOString().slice(0,10)}.xlsx`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setExporting(false);
+      setExportMsg('');
+    }
+  };
+
+  const STRATEGY_COLORS = { PE: '#10b981', VC: '#58a6ff', Infrastructure: '#f0a500', 'Private Credit': '#a78bfa', 'Real Assets': '#fb923c' };
+
+  return (
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 60px' }}>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase', color: '#10b981', marginBottom: 10 }}>Target Generator</div>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: -0.4, marginBottom: 6 }}>Generate LP Target List</h2>
+        <p style={{ fontSize: 13, color: '#6e7681', lineHeight: 1.65 }}>Set your criteria, generate targets, then select any to research individually or export to Excel.</p>
+      </div>
+
+      {/* Criteria form */}
+      <div style={{ ...S.card, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div>
+          <div style={{ ...S.sectionLabel, marginBottom: 10 }}>Institution Type</div>
+          <MultiToggle options={INST_TYPES} selected={instTypes} onChange={setInstTypes} color="#10b981" />
+          {instTypes.length === 0 && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', marginTop: 6 }}>All types</div>}
+        </div>
+        <div>
+          <div style={{ ...S.sectionLabel, marginBottom: 10 }}>Geography</div>
+          <SingleToggle options={GEOGRAPHIES} selected={geography} onChange={setGeography} />
+        </div>
+        <div>
+          <div style={{ ...S.sectionLabel, marginBottom: 10 }}>AUM Range</div>
+          <SingleToggle options={AUM_RANGES} selected={aumRange} onChange={setAumRange} />
+        </div>
+        <div>
+          <div style={{ ...S.sectionLabel, marginBottom: 10 }}>Private Markets Strategy Focus</div>
+          <MultiToggle options={STRATEGIES} selected={strategies} onChange={setStrategies} color="#58a6ff" />
+          {strategies.length === 0 && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', marginTop: 6 }}>All strategies</div>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ ...S.sectionLabel, marginBottom: 10 }}>Number of Targets</div>
+            <SingleToggle options={COUNTS.map(String)} selected={String(count)} onChange={v => setCount(Number(v))} />
+          </div>
+          <button onClick={generate} disabled={loading} style={{
+            padding: '13px 32px', background: loading ? '#1e242c' : '#10b981',
+            color: loading ? '#484f58' : '#000', border: 'none', borderRadius: 10,
+            fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 800,
+            cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
+          }}>
+            {loading ? 'Generating...' : 'Generate Targets →'}
+          </button>
+        </div>
+      </div>
+
+      {loading && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '24px 0', color: '#6e7681' }}>
+          <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #1e242c', borderTopColor: '#10b981', animation: 'spin 0.75s linear infinite' }}/>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>Building target list...</span>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
+      {error && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#f85149', padding: '12px 0' }}>{error}</div>}
+
+      {targets.length > 0 && (
+        <div>
+          {/* Toolbar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: '#6e7681' }}>
+                {targets.length} targets · {selected.size} selected
+              </div>
+              <button onClick={selectAll} style={{ background: 'none', border: 'none', color: '#58a6ff', fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: 'pointer', padding: 0 }}>Select all</button>
+              {selected.size > 0 && <button onClick={clearAll} style={{ background: 'none', border: 'none', color: '#6e7681', fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: 'pointer', padding: 0 }}>Clear</button>}
+            </div>
+            {selected.size > 0 && (
+              <button onClick={exportToExcel} disabled={exporting} style={{
+                padding: '9px 20px', background: exporting ? '#1e242c' : '#1e242c',
+                border: `1px solid ${exporting ? 'rgba(255,255,255,0.08)' : 'rgba(16,185,129,0.4)'}`,
+                borderRadius: 8, color: exporting ? '#484f58' : '#10b981',
+                fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700,
+                cursor: exporting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                {exporting ? (
+                  <><div style={{ width: 12, height: 12, borderRadius: '50%', border: '1.5px solid #484f58', borderTopColor: '#10b981', animation: 'spin 0.75s linear infinite' }}/>{exportMsg}</>
+                ) : (
+                  <>↓ Export {selected.size} to Excel</>
+                )}
+              </button>
+            )}
+          </div>
+
+          {/* Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
+            {targets.map((t, i) => {
+              const isSelected = selected.has(t.name);
+              return (
+                <div key={i} style={{
+                  ...S.card, position: 'relative', transition: 'border-color 0.15s, background 0.15s',
+                  borderColor: isSelected ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.07)',
+                  background: isSelected ? '#1a2620' : '#161b22',
+                }}>
+                  {/* Checkbox */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', flex: 1 }}>
+                      <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(t.name)}
+                        style={{ marginTop: 2, accentColor: '#10b981', width: 14, height: 14, flexShrink: 0, cursor: 'pointer' }} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e6edf3', lineHeight: 1.35 }}>{t.name}</span>
+                    </label>
+                    <button onClick={() => onSelectLP(t.name)} style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#10b981',
+                      background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)',
+                      borderRadius: 100, padding: '2px 8px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                    }}>Research →</button>
+                  </div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681', marginBottom: 8 }}>
+                    {t.type} · {t.location} · {t.aum}
+                  </div>
+                  {t.strategies?.length > 0 && (
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+                      {t.strategies.map(s => (
+                        <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 100, background: (STRATEGY_COLORS[s] || '#6e7681') + '14', color: STRATEGY_COLORS[s] || '#6e7681', border: `1px solid ${(STRATEGY_COLORS[s] || '#6e7681')}33` }}>{s}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11, color: '#6e7681', lineHeight: 1.6 }}>{t.why}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── App ────────────────────────────────────────────────────────────────────
 
 function App() {
-  const [phase, setPhase]     = useState('search');  // search | loading | result | error
+  const [page, setPage]       = useState('research'); // research | generator
+  const [phase, setPhase]     = useState('search');   // search | loading | result | error
   const [query, setQuery]     = useState('');
   const [briefing, setBriefing] = useState(null);
   const [error, setError]     = useState('');
@@ -653,19 +960,26 @@ function App() {
     setError('');
   };
 
+  const handleSelectLP = (name) => {
+    setPage('research');
+    handleSearch(name);
+  };
+
   return (
     <div>
-      <TopBar onNew={handleNew} showNew={phase !== 'search'} />
+      <TopBar onNew={handleNew} showNew={phase !== 'search'} page={page} setPage={setPage} />
 
-      {phase === 'search' && <SearchView onSearch={handleSearch} />}
+      {page === 'generator' && <GeneratorPage onSelectLP={handleSelectLP} />}
 
-      {phase === 'loading' && <LoadingView query={query} />}
+      {page === 'research' && phase === 'search' && <SearchView onSearch={handleSearch} />}
 
-      {phase === 'result' && briefing && (
+      {page === 'research' && phase === 'loading' && <LoadingView query={query} />}
+
+      {page === 'research' && phase === 'result' && briefing && (
         <BriefingView briefing={briefing} query={query} />
       )}
 
-      {phase === 'error' && (
+      {page === 'research' && phase === 'error' && (
         <div style={{
           minHeight: 'calc(100vh - 60px)', display: 'flex',
           flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
