@@ -237,4 +237,4 @@ app.post('/api/generate-targets', async (req, res) => {
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Proof LP Intelligence running at http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Proof LP Intelligence running on 0.0.0.0:${PORT}`));
