@@ -4,27 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Proof — LP Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:       #0d1117;
-  --bg2:      #161b22;
-  --bg3:      #1e242c;
-  --bg4:      #262e38;
-  --green:    #10b981;
+  --bg:       #ffffff;
+  --bg2:      #fafbfc;
+  --bg3:      #f3f5f8;
+  --bg4:      #e8ecf1;
+  --green:    #047857;
   --green-d:  #065f46;
-  --white:    #e6edf3;
-  --slate:    #484f58;
-  --slate-l:  #6e7681;
-  --slate-ll: #8b949e;
-  --blue:     #58a6ff;
-  --amber:    #f0a500;
-  --red:      #f85149;
-  --border:   rgba(255,255,255,0.07);
-  --border-g: rgba(16,185,129,0.25);
+  --ink:      #0b1220;
+  --slate:    #a1a8b3;
+  --slate-l:  #5a6578;
+  --slate-ll: #8a95a5;
+  --blue:     #2563eb;
+  --amber:    #b45309;
+  --red:      #b91c1c;
+  --border:   #e5e7eb;
+  --border-g: rgba(4,120,87,0.25);
 }
-html, body { min-height: 100%; background: var(--bg); color: var(--white); font-family: 'Syne', sans-serif; }
+html, body { min-height: 100%; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
 a { color: var(--blue); text-decoration: none; }
 a:hover { text-decoration: underline; }
 </style>
@@ -55,45 +55,46 @@ const LOADING_STEPS = [
 ];
 
 const FIT_COLORS = {
-  'Strong Fit':   '#10b981',
-  'Good Fit':     '#58a6ff',
-  'Moderate Fit': '#f0a500',
-  'Weak Fit':     '#f85149',
+  'Strong Fit':   '#047857',
+  'Good Fit':     '#2563eb',
+  'Moderate Fit': '#b45309',
+  'Weak Fit':     '#b91c1c',
 };
 
 const SEVERITY_COLORS = {
-  high:   '#f85149',
-  medium: '#f0a500',
-  low:    '#58a6ff',
+  high:   '#b91c1c',
+  medium: '#b45309',
+  low:    '#2563eb',
 };
 
 // ── Shared styles ──────────────────────────────────────────────────────────
 
 const S = {
   topbar: {
-    height: 60, background: '#161b22',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
+    height: 64, background: '#ffffff',
+    borderBottom: '1px solid #e5e7eb',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '0 28px', position: 'sticky', top: 0, zIndex: 100,
+    padding: '0 32px', position: 'sticky', top: 0, zIndex: 100,
   },
   logo: { display: 'flex', alignItems: 'center', gap: 12 },
   logoMark: {
-    width: 32, height: 32, background: '#10b981', borderRadius: 8,
+    width: 32, height: 32, background: '#0b1220', borderRadius: 8,
     display: 'grid', placeItems: 'center', flexShrink: 0,
   },
-  logoName: { fontSize: 15, fontWeight: 800, letterSpacing: -0.4, color: '#fff' },
-  logoSub: { fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681', marginLeft: 4 },
+  logoName: { fontSize: 15, fontWeight: 700, letterSpacing: -0.3, color: '#0b1220' },
+  logoSub: { fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#5a6578', marginLeft: 4 },
   pill: {
     fontFamily: "'DM Mono', monospace", fontSize: 10, padding: '4px 13px',
-    borderRadius: 100, border: '1px solid rgba(16,185,129,0.3)', color: '#10b981', letterSpacing: 0.5,
+    borderRadius: 100, border: '1px solid #e5e7eb', color: '#5a6578', letterSpacing: 0.5,
+    background: '#fafbfc',
   },
   card: {
-    background: '#161b22', border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: 12, padding: '18px 20px',
+    background: '#ffffff', border: '1px solid #e5e7eb',
+    borderRadius: 12, padding: '20px 22px',
   },
   sectionLabel: {
     fontFamily: "'DM Mono', monospace", fontSize: 9, fontWeight: 500,
-    letterSpacing: 1.6, textTransform: 'uppercase', color: '#6e7681',
+    letterSpacing: 1.6, textTransform: 'uppercase', color: '#5a6578',
     marginBottom: 12,
   },
 };
@@ -106,21 +107,22 @@ function TopBar({ onNew, showNew, page, setPage }) {
       <div style={S.logo}>
         <div style={S.logoMark}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6.5" stroke="#000" strokeWidth="1.5"/>
-            <path d="M8 4.5v4M8 10v1.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="8" cy="8" r="6.5" stroke="#ffffff" strokeWidth="1.5"/>
+            <path d="M8 4.5v4M8 10v1.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
         <span style={S.logoName}>Proof</span>
         <span style={S.logoSub}>/ lp intelligence</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0d1117', borderRadius: 8, padding: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f3f5f8', borderRadius: 8, padding: 4 }}>
         {['research', 'generator'].map(p => (
           <button key={p} onClick={() => { setPage(p); if (p === 'research') onNew(); }} style={{
             padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer',
-            fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600,
-            background: page === p ? '#1e242c' : 'transparent',
-            color: page === p ? '#e6edf3' : '#6e7681',
+            fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600,
+            background: page === p ? '#ffffff' : 'transparent',
+            color: page === p ? '#0b1220' : '#5a6578',
+            boxShadow: page === p ? '0 1px 2px rgba(11,18,32,0.08)' : 'none',
             transition: 'all 0.15s',
           }}>
             {p === 'research' ? 'Research' : 'Generate Targets'}
@@ -131,8 +133,8 @@ function TopBar({ onNew, showNew, page, setPage }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         {showNew && page === 'research' && (
           <button onClick={onNew} style={{
-            padding: '7px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 8, color: '#8b949e', fontFamily: "'Syne', sans-serif", fontSize: 12,
+            padding: '7px 16px', background: 'transparent', border: '1px solid #d1d5db',
+            borderRadius: 8, color: '#6b7280', fontFamily: "'Inter', sans-serif", fontSize: 12,
             fontWeight: 600, cursor: 'pointer',
           }}>← New Search</button>
         )}
@@ -198,11 +200,11 @@ function SearchView({ onSearch }) {
     }}>
       <div style={{ maxWidth: 620, width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: '#10b981', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>LP Intelligence</div>
-          <h1 style={{ fontSize: 34, fontWeight: 800, letterSpacing: -0.8, color: '#fff', lineHeight: 1.2, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: '#047857', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>LP Intelligence</div>
+          <h1 style={{ fontSize: 40, fontWeight: 700, letterSpacing: -1, color: '#0b1220', lineHeight: 1.15, marginBottom: 14 }}>
             Research any LP<br/>before you reach out
           </h1>
-          <p style={{ fontSize: 14, color: '#6e7681', lineHeight: 1.7 }}>
+          <p style={{ fontSize: 14, color: '#5a6578', lineHeight: 1.7 }}>
             Enter an institution name or website. Proof researches their portfolio,<br/>
             risk profile, key contacts, and fit for Proof's platform.
           </p>
@@ -216,23 +218,23 @@ function SearchView({ onSearch }) {
             onKeyDown={e => e.key === 'Enter' && submit()}
             placeholder="e.g. Teacher Retirement System of Texas"
             style={{
-              flex: 1, background: '#1e242c', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 10, color: '#e6edf3', fontFamily: "'Syne', sans-serif",
+              flex: 1, background: '#ffffff', border: '1px solid #d1d5db',
+              borderRadius: 10, color: '#0b1220', fontFamily: "'Inter', sans-serif",
               fontSize: 14, padding: '14px 18px', outline: 'none',
-              transition: 'border-color 0.15s',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
             }}
-            onFocus={e => e.target.style.borderColor = 'rgba(16,185,129,0.4)'}
-            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+            onFocus={e => { e.target.style.borderColor = '#0b1220'; e.target.style.boxShadow = '0 0 0 3px rgba(11,18,32,0.06)'; }}
+            onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
           />
           <button
             onClick={submit}
             disabled={!q.trim()}
             style={{
-              padding: '14px 24px', background: q.trim() ? '#10b981' : '#1e242c',
-              color: q.trim() ? '#000' : '#484f58',
-              border: '1px solid ' + (q.trim() ? '#10b981' : 'rgba(255,255,255,0.07)'),
-              borderRadius: 10, fontFamily: "'Syne', sans-serif", fontSize: 13,
-              fontWeight: 800, cursor: q.trim() ? 'pointer' : 'not-allowed',
+              padding: '14px 24px', background: q.trim() ? '#0b1220' : '#f3f5f8',
+              color: q.trim() ? '#ffffff' : '#a1a8b3',
+              border: '1px solid ' + (q.trim() ? '#0b1220' : '#e5e7eb'),
+              borderRadius: 10, fontFamily: "'Inter', sans-serif", fontSize: 13,
+              fontWeight: 700, cursor: q.trim() ? 'pointer' : 'not-allowed',
               transition: 'all 0.15s', whiteSpace: 'nowrap',
             }}
           >
@@ -241,15 +243,15 @@ function SearchView({ onSearch }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', letterSpacing: 0.5 }}>TRY:</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#a1a8b3', letterSpacing: 0.5 }}>TRY:</span>
           {examples.map(ex => (
             <button key={ex} onClick={() => onSearch(ex)} style={{
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 100, color: '#6e7681', fontFamily: "'Syne', sans-serif",
+              background: 'transparent', border: '1px solid #e5e7eb',
+              borderRadius: 100, color: '#5a6578', fontFamily: "'Inter', sans-serif",
               fontSize: 11, padding: '4px 12px', cursor: 'pointer', transition: 'all 0.15s',
             }}
-            onMouseEnter={e => { e.target.style.borderColor = 'rgba(16,185,129,0.3)'; e.target.style.color = '#10b981'; }}
-            onMouseLeave={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.color = '#6e7681'; }}
+            onMouseEnter={e => { e.target.style.borderColor = 'rgba(4,120,87,0.35)'; e.target.style.color = '#047857'; }}
+            onMouseLeave={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.color = '#5a6578'; }}
             >
               {ex}
             </button>
@@ -258,28 +260,28 @@ function SearchView({ onSearch }) {
 
         {saved.length > 0 && (
           <div style={{ marginTop: 40 }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: '#6e7681', marginBottom: 12 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: '#5a6578', marginBottom: 12 }}>
               Saved Briefings · {saved.length}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
               {saved.map(s => (
                 <div key={s.key} onClick={() => onSearch(s.query)} style={{
-                  background: '#161b22', border: '1px solid rgba(255,255,255,0.07)',
+                  background: '#fafbfc', border: '1px solid #e5e7eb',
                   borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
                   display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
                   transition: 'border-color 0.15s, background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(4,120,87,0.35)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#e5e7eb'}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#e6edf3', lineHeight: 1.3, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0b1220', lineHeight: 1.3, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#5a6578' }}>
                       {[s.aum, s.hq, fmtAgo(s.researched_at)].filter(Boolean).join(' · ')}
                     </div>
                   </div>
                   <button onClick={(e) => deleteSaved(s.key, e)} title="Delete" style={{
-                    background: 'transparent', border: 'none', color: '#484f58',
+                    background: 'transparent', border: 'none', color: '#a1a8b3',
                     fontSize: 14, cursor: 'pointer', padding: 2, lineHeight: 1,
                   }}>×</button>
                 </div>
@@ -311,22 +313,22 @@ function LoadingView({ query }) {
       <div style={{ position: 'relative', width: 56, height: 56 }}>
         <div style={{
           width: 56, height: 56, borderRadius: '50%',
-          border: '2px solid #1e242c', borderTopColor: '#10b981',
+          border: '2px solid #f3f5f8', borderTopColor: '#047857',
           animation: 'spin 0.75s linear infinite',
         }}/>
       </div>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#0b1220', marginBottom: 6 }}>
           Researching {query}
         </div>
         <div style={{
-          fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#6e7681',
+          fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#5a6578',
           minHeight: 18, transition: 'opacity 0.3s',
         }}>
           {LOADING_STEPS[step]}
         </div>
       </div>
-      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58' }}>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#a1a8b3' }}>
         This typically takes 30–60 seconds
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -337,20 +339,20 @@ function LoadingView({ query }) {
 // ── BriefingView ───────────────────────────────────────────────────────────
 
 const ESG_COLORS = {
-  'ESG Leader':    '#10b981',
-  'ESG Active':    '#58a6ff',
-  'ESG Developing':'#f0a500',
-  'ESG Minimal':   '#6e7681',
+  'ESG Leader':    '#047857',
+  'ESG Active':    '#2563eb',
+  'ESG Developing':'#b45309',
+  'ESG Minimal':   '#5a6578',
 };
 
 function ScoreBadge({ label, score, rating, color }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      background: '#1e242c', border: `1px solid ${color}33`,
+      background: '#f3f5f8', border: `1px solid ${color}33`,
       borderRadius: 12, padding: '14px 20px', minWidth: 110,
     }}>
-      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: '#6e7681', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: '#5a6578', marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 36, fontWeight: 800, color, lineHeight: 1, marginBottom: 4 }}>{score}</div>
       <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color, textAlign: 'center' }}>{rating}</div>
     </div>
@@ -358,7 +360,7 @@ function ScoreBadge({ label, score, rating, color }) {
 }
 
 function FitBadge({ score, rating }) {
-  const color = FIT_COLORS[rating] || '#10b981';
+  const color = FIT_COLORS[rating] || '#047857';
   return <ScoreBadge label="Proof Fit" score={score} rating={rating} color={color} />;
 }
 
@@ -366,8 +368,8 @@ function Tag({ children, color }) {
   return (
     <span style={{
       fontFamily: "'DM Mono', monospace", fontSize: 10, padding: '3px 10px',
-      borderRadius: 100, border: `1px solid ${color || 'rgba(255,255,255,0.1)'}`,
-      color: color || '#8b949e', background: color ? color + '14' : 'transparent',
+      borderRadius: 100, border: `1px solid ${color || '#d1d5db'}`,
+      color: color || '#6b7280', background: color ? color + '14' : 'transparent',
       whiteSpace: 'nowrap',
     }}>{children}</span>
   );
@@ -387,25 +389,25 @@ function InstitutionHeader({ institution, fit, esg }) {
     <div style={{ ...S.card, marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase', color: '#10b981', marginBottom: 8 }}>LP Briefing</div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 12 }}>{institution.name}</h2>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase', color: '#047857', marginBottom: 8 }}>LP Briefing</div>
+          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#0b1220', letterSpacing: -0.6, lineHeight: 1.2, marginBottom: 12 }}>{institution.name}</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-            <Tag color="#10b981">{institution.type}</Tag>
+            <Tag color="#047857">{institution.type}</Tag>
             <Tag>{institution.aum} AUM</Tag>
             <Tag>{institution.hq}</Tag>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681' }}>Private Markets:</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#e6edf3', fontWeight: 500 }}>{institution.private_markets_allocation}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#5a6578' }}>Private Markets:</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#0b1220', fontWeight: 500 }}>{institution.private_markets_allocation}</span>
           </div>
           {institution.investment_focus && (
-            <div style={{ marginTop: 10, fontSize: 12, color: '#8b949e', lineHeight: 1.65 }}>
+            <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280', lineHeight: 1.65 }}>
               {institution.investment_focus}
             </div>
           )}
         </div>
         <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          {esg && <ScoreBadge label="ESG Score" score={esg.score} rating={esg.rating} color={ESG_COLORS[esg.rating] || '#58a6ff'} />}
+          {esg && <ScoreBadge label="ESG Score" score={esg.score} rating={esg.rating} color={ESG_COLORS[esg.rating] || '#2563eb'} />}
           <FitBadge score={fit.score} rating={fit.rating} />
         </div>
       </div>
@@ -414,7 +416,7 @@ function InstitutionHeader({ institution, fit, esg }) {
 }
 
 function FundExposures({ items }) {
-  if (!items?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No fund exposures identified</div>;
+  if (!items?.length) return <div style={{ color: '#a1a8b3', fontSize: 12 }}>No fund exposures identified</div>;
   const byStrategy = items.reduce((acc, f) => {
     if (!acc[f.strategy]) acc[f.strategy] = [];
     acc[f.strategy].push(f);
@@ -425,14 +427,14 @@ function FundExposures({ items }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {Object.entries(byStrategy).map(([strategy, funds]) => (
         <div key={strategy}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#10b981', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 7 }}>{strategy}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#047857', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 7 }}>{strategy}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {funds.map((f, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ color: '#10b981', fontSize: 12, flexShrink: 0, lineHeight: '18px' }}>›</span>
+                <span style={{ color: '#047857', fontSize: 12, flexShrink: 0, lineHeight: '18px' }}>›</span>
                 <div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#e6edf3' }}>{f.manager}</span>
-                  {f.notes && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681', marginLeft: 8 }}>{f.notes}</span>}
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0b1220' }}>{f.manager}</span>
+                  {f.notes && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#5a6578', marginLeft: 8 }}>{f.notes}</span>}
                 </div>
               </div>
             ))}
@@ -447,19 +449,19 @@ function RegulatorySection({ regulatory }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', marginBottom: 4 }}>JURISDICTION</div>
-        <Tag color="#58a6ff">{regulatory.jurisdiction}</Tag>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#5a6578', marginBottom: 4 }}>JURISDICTION</div>
+        <Tag color="#2563eb">{regulatory.jurisdiction}</Tag>
       </div>
       {regulatory.registration && (
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', marginBottom: 4 }}>REGISTRATION</div>
-          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{regulatory.registration}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#5a6578', marginBottom: 4 }}>REGISTRATION</div>
+          <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>{regulatory.registration}</div>
         </div>
       )}
       {regulatory.compliance_notes && (
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', marginBottom: 4 }}>CONTEXT</div>
-          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{regulatory.compliance_notes}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#5a6578', marginBottom: 4 }}>CONTEXT</div>
+          <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>{regulatory.compliance_notes}</div>
         </div>
       )}
     </div>
@@ -467,13 +469,13 @@ function RegulatorySection({ regulatory }) {
 }
 
 function RecentActivity({ items }) {
-  if (!items?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No recent activity identified</div>;
+  if (!items?.length) return <div style={{ color: '#a1a8b3', fontSize: 12 }}>No recent activity identified</div>;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {items.map((item, i) => (
         <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#10b981', flexShrink: 0, paddingTop: 1, minWidth: 72 }}>{item.date}</div>
-          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{item.event}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#047857', flexShrink: 0, paddingTop: 1, minWidth: 72 }}>{item.date}</div>
+          <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>{item.event}</div>
         </div>
       ))}
     </div>
@@ -482,26 +484,26 @@ function RecentActivity({ items }) {
 
 function RiskFlags({ flags }) {
   if (!flags?.length) return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10b981' }}>
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#10b981" strokeWidth="1.2"/><path d="M4.5 7l2 2 3-3" stroke="#10b981" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#047857' }}>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#047857" strokeWidth="1.2"/><path d="M4.5 7l2 2 3-3" stroke="#047857" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>No flags identified</span>
     </div>
   );
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {flags.map((f, i) => {
-        const color = SEVERITY_COLORS[f.severity] || '#6e7681';
+        const color = SEVERITY_COLORS[f.severity] || '#5a6578';
         return (
-          <div key={i} style={{ background: '#0d1117', borderRadius: 8, padding: '10px 12px', border: `1px solid ${color}22` }}>
+          <div key={i} style={{ background: '#ffffff', borderRadius: 8, padding: '10px 12px', border: `1px solid ${color}22` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: f.source ? 4 : 0 }}>
-              <div style={{ fontSize: 12, color: '#e6edf3', lineHeight: 1.55 }}>{f.flag}</div>
+              <div style={{ fontSize: 12, color: '#0b1220', lineHeight: 1.55 }}>{f.flag}</div>
               <span style={{
                 fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 8px', borderRadius: 100,
                 background: color + '18', color, border: `1px solid ${color}33`,
                 textTransform: 'uppercase', flexShrink: 0,
               }}>{f.severity}</span>
             </div>
-            {f.source && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58' }}>{f.source}</div>}
+            {f.source && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#a1a8b3' }}>{f.source}</div>}
           </div>
         );
       })}
@@ -510,18 +512,18 @@ function RiskFlags({ flags }) {
 }
 
 function KeyContacts({ contacts }) {
-  if (!contacts?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No contacts identified</div>;
+  if (!contacts?.length) return <div style={{ color: '#a1a8b3', fontSize: 12 }}>No contacts identified</div>;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {contacts.map((c, i) => (
-        <div key={i} style={{ background: '#0d1117', borderRadius: 8, padding: '10px 12px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#e6edf3', marginBottom: 2 }}>
+        <div key={i} style={{ background: '#ffffff', borderRadius: 8, padding: '10px 12px' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#0b1220', marginBottom: 2 }}>
             {c.name}
             {c.linkedin && (
-              <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 8, fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#58a6ff', verticalAlign: 'middle' }}>LinkedIn ↗</a>
+              <a href={c.linkedin} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 8, fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#2563eb', verticalAlign: 'middle' }}>LinkedIn ↗</a>
             )}
           </div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#10b981' }}>{c.title}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#047857' }}>{c.title}</div>
         </div>
       ))}
     </div>
@@ -529,17 +531,17 @@ function KeyContacts({ contacts }) {
 }
 
 function WarmEntryPoints({ points }) {
-  if (!points?.length) return <div style={{ color: '#484f58', fontSize: 12 }}>No entry points identified</div>;
+  if (!points?.length) return <div style={{ color: '#a1a8b3', fontSize: 12 }}>No entry points identified</div>;
   const typeColors = {
-    interview: '#10b981', conference: '#58a6ff', article: '#f0a500',
-    report: '#8b949e', 'linkedin post': '#0a66c2',
+    interview: '#047857', conference: '#2563eb', article: '#b45309',
+    report: '#6b7280', 'linkedin post': '#0a66c2',
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {points.map((p, i) => {
-        const color = typeColors[p.type?.toLowerCase()] || '#6e7681';
+        const color = typeColors[p.type?.toLowerCase()] || '#5a6578';
         return (
-          <div key={i} style={{ background: '#0d1117', borderRadius: 8, padding: '10px 12px' }}>
+          <div key={i} style={{ background: '#ffffff', borderRadius: 8, padding: '10px 12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{
                 fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 8px',
@@ -547,10 +549,10 @@ function WarmEntryPoints({ points }) {
                 textTransform: 'uppercase',
               }}>{p.type}</span>
               {p.url && (
-                <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#58a6ff' }}>↗</a>
+                <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#2563eb' }}>↗</a>
               )}
             </div>
-            <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.6 }}>{p.description}</div>
+            <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>{p.description}</div>
           </div>
         );
       })}
@@ -559,20 +561,20 @@ function WarmEntryPoints({ points }) {
 }
 
 function EsgSection({ esg }) {
-  const color = ESG_COLORS[esg.rating] || '#58a6ff';
+  const color = ESG_COLORS[esg.rating] || '#2563eb';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ fontSize: 32, fontWeight: 800, color, lineHeight: 1 }}>{esg.score}<span style={{ fontSize: 16, color: '#484f58' }}>/10</span></div>
+        <div style={{ fontSize: 32, fontWeight: 800, color, lineHeight: 1 }}>{esg.score}<span style={{ fontSize: 16, color: '#a1a8b3' }}>/10</span></div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color }}>{esg.rating}</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681' }}>ESG integration score</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#5a6578' }}>ESG integration score</div>
         </div>
       </div>
-      <p style={{ fontSize: 13, color: '#8b949e', lineHeight: 1.7 }}>{esg.brief}</p>
+      <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>{esg.brief}</p>
       {esg.frameworks?.length > 0 && (
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Frameworks & Commitments</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#5a6578', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Frameworks & Commitments</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {esg.frameworks.map((f, i) => <Tag key={i} color={color}>{f}</Tag>)}
           </div>
@@ -580,18 +582,18 @@ function EsgSection({ esg }) {
       )}
       {esg.gp_requirements && (
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>GP Reporting Requirements</div>
-          <div style={{ fontSize: 12, color: '#8b949e', lineHeight: 1.65 }}>{esg.gp_requirements}</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#5a6578', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>GP Reporting Requirements</div>
+          <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.65 }}>{esg.gp_requirements}</div>
         </div>
       )}
       {esg.key_factors?.length > 0 && (
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Key Factors</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#5a6578', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Key Factors</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {esg.key_factors.map((f, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <span style={{ color, fontSize: 12, flexShrink: 0, lineHeight: '18px' }}>›</span>
-                <span style={{ fontSize: 12, color: '#e6edf3', lineHeight: 1.55 }}>{f}</span>
+                <span style={{ fontSize: 12, color: '#0b1220', lineHeight: 1.55 }}>{f}</span>
               </div>
             ))}
           </div>
@@ -602,25 +604,25 @@ function EsgSection({ esg }) {
 }
 
 function ProofFitSection({ fit }) {
-  const color = FIT_COLORS[fit.rating] || '#10b981';
+  const color = FIT_COLORS[fit.rating] || '#047857';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ fontSize: 32, fontWeight: 800, color, lineHeight: 1 }}>{fit.score}<span style={{ fontSize: 16, color: '#484f58' }}>/10</span></div>
+        <div style={{ fontSize: 32, fontWeight: 800, color, lineHeight: 1 }}>{fit.score}<span style={{ fontSize: 16, color: '#a1a8b3' }}>/10</span></div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color }}>{fit.rating}</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681' }}>Proof fit score</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#5a6578' }}>Proof fit score</div>
         </div>
       </div>
-      <p style={{ fontSize: 13, color: '#8b949e', lineHeight: 1.7 }}>{fit.rationale}</p>
+      <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>{fit.rationale}</p>
       {fit.key_drivers?.length > 0 && (
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#6e7681', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Key Drivers</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#5a6578', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>Key Drivers</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {fit.key_drivers.map((d, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <span style={{ color, fontSize: 12, flexShrink: 0, lineHeight: '18px' }}>›</span>
-                <span style={{ fontSize: 12, color: '#e6edf3', lineHeight: 1.55 }}>{d}</span>
+                <span style={{ fontSize: 12, color: '#0b1220', lineHeight: 1.55 }}>{d}</span>
               </div>
             ))}
           </div>
@@ -672,19 +674,19 @@ function BriefingView({ briefing, query }) {
         </SectionCard>
 
         {/* ESG + Proof Fit side by side */}
-        <SectionCard label="ESG & Impact" style={{ borderColor: (ESG_COLORS[esg?.rating] || '#58a6ff') + '33' }}>
+        <SectionCard label="ESG & Impact" style={{ borderColor: (ESG_COLORS[esg?.rating] || '#2563eb') + '33' }}>
           {esg
             ? <EsgSection esg={esg} />
-            : <div style={{ color: '#484f58', fontSize: 12 }}>ESG data not available — restart the server and run a new search</div>
+            : <div style={{ color: '#a1a8b3', fontSize: 12 }}>ESG data not available — restart the server and run a new search</div>
           }
         </SectionCard>
-        <SectionCard label="Proof Fit Analysis" style={{ borderColor: (FIT_COLORS[proof_fit?.rating] || '#10b981') + '33' }}>
+        <SectionCard label="Proof Fit Analysis" style={{ borderColor: (FIT_COLORS[proof_fit?.rating] || '#047857') + '33' }}>
           <ProofFitSection fit={proof_fit} />
         </SectionCard>
 
       </div>
 
-      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', textAlign: 'center', marginTop: 8 }}>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#a1a8b3', textAlign: 'center', marginTop: 8 }}>
         Briefing generated by Proof Intelligence · Research reflects public information as of the date of generation
       </div>
     </div>
@@ -706,10 +708,10 @@ function MultiToggle({ options, selected, onChange, color }) {
         const active = selected.includes(opt);
         return (
           <button key={opt} onClick={() => onChange(active ? selected.filter(s => s !== opt) : [...selected, opt])} style={{
-            padding: '6px 14px', borderRadius: 100, border: `1px solid ${active ? (color || '#10b981') + '60' : 'rgba(255,255,255,0.1)'}`,
-            background: active ? (color || '#10b981') + '14' : 'transparent',
-            color: active ? (color || '#10b981') : '#6e7681',
-            fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600,
+            padding: '6px 14px', borderRadius: 100, border: `1px solid ${active ? (color || '#047857') + '60' : '#d1d5db'}`,
+            background: active ? (color || '#047857') + '14' : 'transparent',
+            color: active ? (color || '#047857') : '#5a6578',
+            fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600,
             cursor: 'pointer', transition: 'all 0.15s',
           }}>{opt}</button>
         );
@@ -726,10 +728,10 @@ function SingleToggle({ options, selected, onChange }) {
         return (
           <button key={opt} onClick={() => onChange(opt)} style={{
             padding: '6px 14px', borderRadius: 100,
-            border: `1px solid ${active ? 'rgba(88,166,255,0.5)' : 'rgba(255,255,255,0.1)'}`,
+            border: `1px solid ${active ? 'rgba(88,166,255,0.5)' : '#d1d5db'}`,
             background: active ? 'rgba(88,166,255,0.12)' : 'transparent',
-            color: active ? '#58a6ff' : '#6e7681',
-            fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600,
+            color: active ? '#2563eb' : '#5a6578',
+            fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600,
             cursor: 'pointer', transition: 'all 0.15s',
           }}>{opt}</button>
         );
@@ -762,22 +764,22 @@ function GeneratorPage({ onSelectLP }) {
     finally { setLoading(false); }
   };
 
-  const STRATEGY_COLORS = { PE: '#10b981', VC: '#58a6ff', Infrastructure: '#f0a500', 'Private Credit': '#a78bfa', 'Real Assets': '#fb923c' };
+  const STRATEGY_COLORS = { PE: '#047857', VC: '#2563eb', Infrastructure: '#b45309', 'Private Credit': '#a78bfa', 'Real Assets': '#fb923c' };
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 60px' }}>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase', color: '#10b981', marginBottom: 10 }}>Target Generator</div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: -0.4, marginBottom: 6 }}>Generate LP Target List</h2>
-        <p style={{ fontSize: 13, color: '#6e7681', lineHeight: 1.65 }}>Set your criteria, generate targets, then click Research on any LP to build a full briefing.</p>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase', color: '#047857', marginBottom: 10 }}>Target Generator</div>
+        <h2 style={{ fontSize: 28, fontWeight: 700, color: '#0b1220', letterSpacing: -0.6, marginBottom: 8 }}>Generate LP Target List</h2>
+        <p style={{ fontSize: 13, color: '#5a6578', lineHeight: 1.65 }}>Set your criteria, generate targets, then click Research on any LP to build a full briefing.</p>
       </div>
 
       {/* Criteria form */}
       <div style={{ ...S.card, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <div style={{ ...S.sectionLabel, marginBottom: 10 }}>Institution Type</div>
-          <MultiToggle options={INST_TYPES} selected={instTypes} onChange={setInstTypes} color="#10b981" />
-          {instTypes.length === 0 && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', marginTop: 6 }}>All types</div>}
+          <MultiToggle options={INST_TYPES} selected={instTypes} onChange={setInstTypes} color="#047857" />
+          {instTypes.length === 0 && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#a1a8b3', marginTop: 6 }}>All types</div>}
         </div>
         <div>
           <div style={{ ...S.sectionLabel, marginBottom: 10 }}>Geography</div>
@@ -789,8 +791,8 @@ function GeneratorPage({ onSelectLP }) {
         </div>
         <div>
           <div style={{ ...S.sectionLabel, marginBottom: 10 }}>Private Markets Strategy Focus</div>
-          <MultiToggle options={STRATEGIES} selected={strategies} onChange={setStrategies} color="#58a6ff" />
-          {strategies.length === 0 && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#484f58', marginTop: 6 }}>All strategies</div>}
+          <MultiToggle options={STRATEGIES} selected={strategies} onChange={setStrategies} color="#2563eb" />
+          {strategies.length === 0 && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#a1a8b3', marginTop: 6 }}>All strategies</div>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
@@ -798,9 +800,9 @@ function GeneratorPage({ onSelectLP }) {
             <SingleToggle options={COUNTS.map(String)} selected={String(count)} onChange={v => setCount(Number(v))} />
           </div>
           <button onClick={generate} disabled={loading} style={{
-            padding: '13px 32px', background: loading ? '#1e242c' : '#10b981',
-            color: loading ? '#484f58' : '#000', border: 'none', borderRadius: 10,
-            fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 800,
+            padding: '13px 32px', background: loading ? '#f3f5f8' : '#0b1220',
+            color: loading ? '#a1a8b3' : '#ffffff', border: 'none', borderRadius: 10,
+            fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700,
             cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
           }}>
             {loading ? 'Generating...' : 'Generate Targets →'}
@@ -809,19 +811,19 @@ function GeneratorPage({ onSelectLP }) {
       </div>
 
       {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '24px 0', color: '#6e7681' }}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #1e242c', borderTopColor: '#10b981', animation: 'spin 0.75s linear infinite' }}/>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '24px 0', color: '#5a6578' }}>
+          <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #f3f5f8', borderTopColor: '#047857', animation: 'spin 0.75s linear infinite' }}/>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11 }}>Building target list...</span>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
-      {error && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#f85149', padding: '12px 0' }}>{error}</div>}
+      {error && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#b91c1c', padding: '12px 0' }}>{error}</div>}
 
       {targets.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: '#6e7681' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: '#5a6578' }}>
               {targets.length} targets
             </div>
           </div>
@@ -833,30 +835,30 @@ function GeneratorPage({ onSelectLP }) {
                 <div key={i} onClick={() => onSelectLP(t.name)} style={{
                   ...S.card, position: 'relative', cursor: 'pointer',
                   transition: 'border-color 0.15s, background 0.15s, transform 0.15s',
-                  borderColor: 'rgba(255,255,255,0.07)', background: '#161b22',
+                  borderColor: '#e5e7eb', background: '#fafbfc',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'; e.currentTarget.style.background = '#1a2620'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = '#161b22'; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(4,120,87,0.5)'; e.currentTarget.style.background = '#ecfdf5'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = '#fafbfc'; }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#e6edf3', lineHeight: 1.35, flex: 1 }}>{t.name}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#0b1220', lineHeight: 1.35, flex: 1 }}>{t.name}</span>
                     <span style={{
-                      fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#10b981',
-                      background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)',
+                      fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#047857',
+                      background: 'rgba(4,120,87,0.08)', border: '1px solid rgba(4,120,87,0.25)',
                       borderRadius: 100, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0,
                     }}>Research →</span>
                   </div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681', marginBottom: 8 }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#5a6578', marginBottom: 8 }}>
                     {t.type} · {t.location} · {t.aum}
                   </div>
                   {t.strategies?.length > 0 && (
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
                       {t.strategies.map(s => (
-                        <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 100, background: (STRATEGY_COLORS[s] || '#6e7681') + '14', color: STRATEGY_COLORS[s] || '#6e7681', border: `1px solid ${(STRATEGY_COLORS[s] || '#6e7681')}33` }}>{s}</span>
+                        <span key={s} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 100, background: (STRATEGY_COLORS[s] || '#5a6578') + '14', color: STRATEGY_COLORS[s] || '#5a6578', border: `1px solid ${(STRATEGY_COLORS[s] || '#5a6578')}33` }}>{s}</span>
                       ))}
                     </div>
                   )}
-                  <div style={{ fontSize: 11, color: '#6e7681', lineHeight: 1.6 }}>{t.why}</div>
+                  <div style={{ fontSize: 11, color: '#5a6578', lineHeight: 1.6 }}>{t.why}</div>
                 </div>
               );
             })}
@@ -928,12 +930,12 @@ function App() {
           minHeight: 'calc(100vh - 60px)', display: 'flex',
           flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
         }}>
-          <div style={{ fontSize: 13, color: '#f85149', fontFamily: "'DM Mono', monospace" }}>Research failed</div>
-          <div style={{ fontSize: 12, color: '#6e7681', maxWidth: 400, textAlign: 'center' }}>{error}</div>
+          <div style={{ fontSize: 13, color: '#b91c1c', fontFamily: "'DM Mono', monospace" }}>Research failed</div>
+          <div style={{ fontSize: 12, color: '#5a6578', maxWidth: 400, textAlign: 'center' }}>{error}</div>
           <button onClick={handleNew} style={{
-            marginTop: 8, padding: '10px 20px', background: '#1e242c',
-            border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8,
-            color: '#8b949e', fontFamily: "'Syne', sans-serif", fontSize: 12,
+            marginTop: 8, padding: '10px 20px', background: '#f3f5f8',
+            border: '1px solid #d1d5db', borderRadius: 8,
+            color: '#6b7280', fontFamily: "'Inter', sans-serif", fontSize: 12,
             fontWeight: 600, cursor: 'pointer',
           }}>Try Again</button>
         </div>
