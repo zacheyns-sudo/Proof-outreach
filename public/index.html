@@ -830,17 +830,21 @@ function GeneratorPage({ onSelectLP }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
             {targets.map((t, i) => {
               return (
-                <div key={i} style={{
-                  ...S.card, position: 'relative', transition: 'border-color 0.15s, background 0.15s',
+                <div key={i} onClick={() => onSelectLP(t.name)} style={{
+                  ...S.card, position: 'relative', cursor: 'pointer',
+                  transition: 'border-color 0.15s, background 0.15s, transform 0.15s',
                   borderColor: 'rgba(255,255,255,0.07)', background: '#161b22',
-                }}>
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'; e.currentTarget.style.background = '#1a2620'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = '#161b22'; }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#e6edf3', lineHeight: 1.35, flex: 1 }}>{t.name}</span>
-                    <button onClick={() => onSelectLP(t.name)} style={{
+                    <span style={{
                       fontFamily: "'DM Mono', monospace", fontSize: 9, color: '#10b981',
                       background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)',
-                      borderRadius: 100, padding: '2px 8px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                    }}>Research →</button>
+                      borderRadius: 100, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0,
+                    }}>Research →</span>
                   </div>
                   <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#6e7681', marginBottom: 8 }}>
                     {t.type} · {t.location} · {t.aum}
