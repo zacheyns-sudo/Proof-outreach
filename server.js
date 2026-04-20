@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path    = require('path');
+const fs      = require('fs');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const app    = express();
@@ -8,6 +9,49 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ── Briefing cache (JSON file) ────────────────────────────────────────────────
+// Railway's ephemeral filesystem resets on deploy; attach a volume at /data for
+// persistence across deploys. Locally it falls back to ./cache/.
+const CACHE_DIR  = process.env.DATA_DIR || path.join(__dirname, 'cache');
+const CACHE_FILE = path.join(CACHE_DIR, 'briefings.json');
+
+try { fs.mkdirSync(CACHE_DIR, { recursive: true }); } catch {}
+
+function normaliseKey(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function loadCache() {
+  try {
+    return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function saveCache(cache) {
+  try {
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+  } catch (err) {
+    console.error('[cache write error]', err.message);
+  }
+}
+
+function getCached(name) {
+  const cache = loadCache();
+  return cache[normaliseKey(name)] || null;
+}
+
+function putCached(name, briefing) {
+  const cache = loadCache();
+  cache[normaliseKey(name)] = {
+    query: name,
+    briefing,
+    researched_at: new Date().toISOString(),
+  };
+  saveCache(cache);
+}
 
 // ── Web search via Tavily ─────────────────────────────────────────────────────
 
@@ -184,43 +228,58 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/research', async (req, res) => {
-  const { query } = req.body;
+  const { query, force } = req.body;
   if (!query?.trim()) return res.status(400).json({ error: 'Query is required' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
   if (!process.env.TAVILY_API_KEY)    return res.status(500).json({ error: 'TAVILY_API_KEY not configured' });
 
+  const trimmed = query.trim();
+
+  if (!force) {
+    const cached = getCached(trimmed);
+    if (cached) return res.json({ ok: true, briefing: cached.briefing, cached: true, researched_at: cached.researched_at });
+  }
+
   try {
-    const briefing = await researchLP(query.trim());
-    res.json({ ok: true, briefing });
+    const briefing = await researchLP(trimmed);
+    putCached(trimmed, briefing);
+    res.json({ ok: true, briefing, cached: false });
   } catch (err) {
     console.error('[research error]', err.message);
-
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/bulk-research', async (req, res) => {
-  const { names } = req.body;
-  if (!Array.isArray(names) || names.length === 0) return res.status(400).json({ error: 'names array required' });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+app.get('/api/briefings', (_req, res) => {
+  const cache = loadCache();
+  const list = Object.entries(cache)
+    .map(([key, entry]) => ({
+      key,
+      query: entry.query,
+      name: entry.briefing?.institution?.name || entry.query,
+      type: entry.briefing?.institution?.type || '',
+      aum: entry.briefing?.institution?.aum || '',
+      hq: entry.briefing?.institution?.hq || '',
+      proof_fit_score: entry.briefing?.proof_fit?.score ?? null,
+      researched_at: entry.researched_at,
+    }))
+    .sort((a, b) => (b.researched_at || '').localeCompare(a.researched_at || ''));
+  res.json({ ok: true, briefings: list });
+});
 
-  // Research in batches of 3 to stay within rate limits
-  const BATCH = 3;
-  const results = [];
-  for (let i = 0; i < names.length; i += BATCH) {
-    const batch = names.slice(i, i + BATCH);
-    const settled = await Promise.allSettled(batch.map(n => researchLP(n)));
-    settled.forEach((r, j) => {
-      results.push(r.status === 'fulfilled'
-        ? { ok: true,  name: batch[j], briefing: r.value }
-        : { ok: false, name: batch[j], error: r.reason?.message }
-      );
-    });
-    // Small pause between batches
-    if (i + BATCH < names.length) await new Promise(r => setTimeout(r, 1500));
-  }
+app.get('/api/briefings/:key', (req, res) => {
+  const cache = loadCache();
+  const entry = cache[req.params.key];
+  if (!entry) return res.status(404).json({ error: 'Not found' });
+  res.json({ ok: true, briefing: entry.briefing, researched_at: entry.researched_at });
+});
 
-  res.json({ ok: true, results });
+app.delete('/api/briefings/:key', (req, res) => {
+  const cache = loadCache();
+  if (!cache[req.params.key]) return res.status(404).json({ error: 'Not found' });
+  delete cache[req.params.key];
+  saveCache(cache);
+  res.json({ ok: true });
 });
 
 app.post('/api/generate-targets', async (req, res) => {
